@@ -16,6 +16,7 @@ export default {
       autoReload: false,
       reloadInterval: null,
       isUpdating: false,
+      locations: [],
     };
   },
   methods: {
@@ -31,9 +32,16 @@ export default {
 
         const userLocations = response.data.announces;
         for (const userLocation of userLocations) {
+          if (this.locations[userLocation.identity_hash]) {
+            continue;
+          }
+
+          this.locations[userLocation.identity_hash] = userLocation;
+
           const appData = userLocation["display_name"];
           const latitude = appData.split(",")[0];
           const longitude = appData.split(",")[1];
+
           L.marker([latitude, longitude]).addTo(this.map)
               .bindPopup((l) => {
                 const el = document.createElement("div");
