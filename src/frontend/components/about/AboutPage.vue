@@ -23,7 +23,7 @@
                     <!-- reticulum config path -->
                     <div class="flex p-1">
                         <div class="mr-auto">
-                            <div>Reticulum Config Path</div>
+                            <div>Config Path</div>
                             <div class="text-sm text-gray-700 break-all">{{ appInfo.reticulum_config_path }}</div>
                         </div>
                         <div v-if="isElectron" class="mx-2 my-auto">
@@ -57,7 +57,7 @@
 
             <!-- reticulum status -->
             <div v-if="appInfo" class="bg-white rounded shadow">
-                <div class="flex border-b border-gray-300 text-gray-700 p-2 font-semibold">Reticulum Status</div>
+                <div class="flex border-b border-gray-300 text-gray-700 p-2 font-semibold">Status</div>
                 <div class="divide-y text-gray-900">
 
                     <!-- instance mode -->
