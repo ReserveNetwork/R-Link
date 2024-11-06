@@ -385,8 +385,8 @@ export default {
       audioCalls: [],
       propagationNodeStatus: null,
 
-      latitude: null,
-      longitude: null,
+      latitude: '',
+      longitude: '',
     };
   },
   beforeUnmount() {

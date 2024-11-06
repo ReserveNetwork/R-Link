@@ -31,11 +31,35 @@ export default {
           const latitude = appData.split(",")[0];
           const longitude = appData.split(",")[1];
           L.marker([latitude, longitude]).addTo(this.map)
+              .bindPopup((l) => {
+                const el = document.createElement("div");
+
+                /**
+                 * Get the peer data
+                 * @param identityHash
+                 * @returns {Promise<void>}
+                 */
+                const getData = async (identityHash) => {
+                  const response = await window.axios.get(`/api/v1/announces`, {
+                    params: {
+                      aspect: "lxmf.delivery",
+                      limit: 100,
+                      identity_hash: identityHash,
+                    },
+                  });
+                  if (response.data.announces.length > 0) {
+                    const announce = response.data.announces[0];
+                    el.innerHTML = `${announce.display_name}`;
+                  }
+                };
+                getData(userLocation.identity_hash);
+                return el;
+              });
         }
       } catch (e) {
         console.log(e);
       }
-    }
+    },
   },
   mounted() {
     this.map = new L.Map('map').fitWorld();
