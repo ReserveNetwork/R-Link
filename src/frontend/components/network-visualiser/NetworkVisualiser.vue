@@ -8,7 +8,7 @@
         <div class="absolute flex bottom-0 left-0 bg-gray-100 p-2">
             <div class="bg-white rounded shadow min-w-52">
                 <div @click="isShowingControls = !isShowingControls" class="flex text-gray-700 p-2 cursor-pointer">
-                    <div class="my-auto">Reticulum Network</div>
+                    <div class="my-auto">Reserve Network</div>
                     <div class="flex ml-auto">
                         <button @click.stop="update" type="button" class="my-auto inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-1 py-0.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
