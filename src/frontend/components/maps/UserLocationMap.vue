@@ -4,6 +4,9 @@ import L from "leaflet";
 import mbTiles from '../../js/Leaflet.TileLayer.MBTiles';
 import Ping from "ping.js";
 
+const ONLINE_MAX_ZOOM = 36;
+const OFFLINE_MAX_ZOOM = 5;
+
 export default {
   name: "UserLocationMap",
   data() {
@@ -79,7 +82,7 @@ export default {
       await this.getUserLocations();
     },
     async onAutoReload() {
-
+      await this.isConnectionUp();
       // do nothing if auto reload disabled
       if (!this.autoReload) {
         return;
@@ -101,12 +104,14 @@ export default {
     },
     async isConnectionUp() {
       try {
-        this.p.ping("https://www.google.com", (err, status) => {
+        this.p.ping("https://www.google.com", (err, duration, payload) => {
           if (err) {
             this.onLineStatus(false);
-            return;
+          } else {
+            this.onLineStatus(true);
           }
-          this.onLineStatus(true);
+        }).catch((e) => {
+          console.error(e);
         });
       } catch (e) {
         console.error(e);
@@ -127,6 +132,7 @@ export default {
             minZoom: 2,
             maxZoom: 48,
           });
+          this.setLocations();
         } else {
           this.tileLayer = mbTiles("assets/db/countries-raster.mbtiles", {
             minZoom: 0,
@@ -136,30 +142,50 @@ export default {
 
         this.tileLayer.addTo(this.map);
 
-        this.tileLayer.on("databaseloaded", function (e) {
-          console.log("MBTiles database loaded");
-          this.loading = false;
-        });
-        this.tileLayer.on("databaseerror", function (e) {
-          console.error(e.error);
-          console.log("MBTiles database error: ", e.error);
-          this.loading = false;
-        });
+        if (!this.onLine) {
+          this.tileLayer.on("databaseloaded", function () {
+            console.log("MBTiles database loaded");
+            this.loading = false;
+          });
+          this.tileLayer.on("databaseerror", function (e) {
+            console.error("MBTiles error", e.error);
+            this.loading = false;
 
-        await this.setLocations();
+          });
+
+          this.setLocations();
+        }
       } catch (e) {
         console.error(e);
       }
     },
-    async setLocations() {
+    setLocations() {
       if (this.map) {
         navigator.geolocation.getCurrentPosition((position) => {
-          this.center = [position.coords.latitude, position.coords.longitude];
-          this.map.setView(this.center, this.zoom);
+          this.center = [position.coords.latitude, position.coords.longitude, position.coords.altitude];
+          this.zoom = this.getZoomOption();
           L.marker(this.center).addTo(this.map);
+          L.circle(this.center, {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.5,
+            radius: 50000,
+          }).addTo(this.map);
+
+          this.map.setView(this.center, this.zoom);
+        }, (error) => {
+          console.error(error);
+          this.center = [41.3851, 36.519];
+          this.zoom = this.getZoomOption();
+          this.map.setView(this.center, this.zoom);
         });
-        await this.getUserLocations();
       }
+    },
+    getZoomOption() {
+      if (this.onLine) {
+        return ONLINE_MAX_ZOOM;
+      }
+      return OFFLINE_MAX_ZOOM;
     }
   },
   watch: {
@@ -180,17 +206,18 @@ export default {
         });
       }
       this.tileLayer.addTo(this.map);
-    },
+    }
   },
   mounted() {
     this.p = new Ping({
-      favicon: false,
+      favicon: "",
     });
 
-    void this.createMap();
+    void this.createMap().then(() => {
+      this.getUserLocations();
+    });
 
     this.reloadInterval = setInterval(this.onAutoReload, 5000);
-    setInterval(this.isConnectionUp, 10000);
   },
   beforeUnmount() {
     if (this.map) {
