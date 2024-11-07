@@ -1,7 +1,6 @@
-## What is R-Link?
+## What is R-Link & Reserve Network??
 
-R-Link is a fork of [Reticulum MeshChat](https://github.com/liamcottle/reticulum-meshchat) with the goal of adding new features and improvements to the original project.
-A simple mesh network communications app powered by the [Reticulum Network Stack](https://github.com/markqvist/Reticulum).
+Reserve Network (RNet) is a self-configuring wireless digital communication network that is designed to operate under adverse conditions such as low bandwidth and high latency, especially for emergency situations where the existing communication infrastructure is inoperable for any reason. R-Link is a low bandwidth or offline communication application designed specifically for communication on this network.
 
 <img src="./screenshots/screenshot.png">
 
