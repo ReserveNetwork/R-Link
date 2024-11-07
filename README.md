@@ -1,7 +1,3 @@
-<p align="center">
-<a href="https://github.com/ReserveNetwork"><img src="./logo/logo-chat-bubble.png" width="150"></a>
-</p>
-
 ## What is R-Link?
 
 R-Link is a fork of [Reticulum MeshChat](https://github.com/liamcottle/reticulum-meshchat) with the goal of adding new features and improvements to the original project.
