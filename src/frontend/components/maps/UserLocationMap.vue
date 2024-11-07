@@ -2,6 +2,7 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import mbTiles from '../../js/Leaflet.TileLayer.MBTiles';
+import Ping from "ping.js";
 
 export default {
   name: "UserLocationMap",
@@ -17,6 +18,8 @@ export default {
       reloadInterval: null,
       isUpdating: false,
       locations: [],
+      onLine: false,
+      p: null,
     };
   },
   methods: {
@@ -96,41 +99,104 @@ export default {
       }
 
     },
+    async isConnectionUp() {
+      try {
+        this.p.ping("https://www.google.com", (err, status) => {
+          if (err) {
+            this.onLineStatus(false);
+            return;
+          }
+          this.onLineStatus(true);
+        });
+      } catch (e) {
+        console.error(e);
+        this.onLineStatus(false);
+      }
+    },
+    onLineStatus(isUp) {
+      console.log("onLineStatus", isUp);
+      this.onLine = isUp;
+    },
+    async createMap() {
+      try {
+        await this.isConnectionUp();
+        this.map = new L.Map('map').fitWorld();
+
+        if (this.onLine) {
+          this.tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            minZoom: 2,
+            maxZoom: 48,
+          });
+        } else {
+          this.tileLayer = mbTiles("assets/db/countries-raster.mbtiles", {
+            minZoom: 0,
+            maxZoom: 6,
+          });
+        }
+
+        this.tileLayer.addTo(this.map);
+
+        this.tileLayer.on("databaseloaded", function (e) {
+          console.log("MBTiles database loaded");
+          this.loading = false;
+        });
+        this.tileLayer.on("databaseerror", function (e) {
+          console.error(e.error);
+          console.log("MBTiles database error: ", e.error);
+          this.loading = false;
+        });
+
+        await this.setLocations();
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async setLocations() {
+      if (this.map) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          this.center = [position.coords.latitude, position.coords.longitude];
+          this.map.setView(this.center, this.zoom);
+          L.marker(this.center).addTo(this.map);
+        });
+        await this.getUserLocations();
+      }
+    }
+  },
+  watch: {
+    onLine(value) {
+      if (!this.map) {
+        return;
+      }
+      this.tileLayer.remove();
+      if (value) {
+        this.tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          minZoom: 2,
+          maxZoom: 48,
+        });
+      } else {
+        this.tileLayer = mbTiles("assets/db/countries-raster.mbtiles", {
+          minZoom: 0,
+          maxZoom: 6,
+        });
+      }
+      this.tileLayer.addTo(this.map);
+    },
   },
   mounted() {
-    this.map = new L.Map('map').fitWorld();
-
-    this.tileLayer = mbTiles("assets/db/countries-raster.mbtiles", {
-      minZoom: 0,
-      maxZoom: 6,
+    this.p = new Ping({
+      favicon: false,
     });
 
-    this.tileLayer.addTo(this.map);
+    void this.createMap();
 
-    this.tileLayer.on("databaseloaded", function (e) {
-      console.log("MBTiles database loaded");
-      this.loading = false;
-    });
-
-    this.tileLayer.on("databaseerror", function (e) {
-      console.error(e.error);
-      console.log("MBTiles database error: ", e.error);
-      this.loading = false;
-    });
-    navigator.geolocation.getCurrentPosition((position) => {
-      this.center = [position.coords.latitude, position.coords.longitude];
-      this.map.setView(this.center, this.zoom);
-      L.marker(this.center).addTo(this.map);
-    });
-    this.getUserLocations();
-
-    // auto reload
     this.reloadInterval = setInterval(this.onAutoReload, 5000);
+    setInterval(this.isConnectionUp, 10000);
   },
   beforeUnmount() {
     if (this.map) {
       this.map.remove();
     }
+    clearInterval(this.reloadInterval);
   },
 }
 </script>
