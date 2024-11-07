@@ -1,6 +1,8 @@
 ## What is R-Link & Reserve Network??
 
-Reserve Network (RNet) is a self-configuring wireless digital communication network that is designed to operate under adverse conditions such as low bandwidth and high latency, especially for emergency situations where the existing communication infrastructure is inoperable for any reason. R-Link is a low bandwidth or offline communication application designed specifically for communication on this network.
+Reserve Network (RNet) is a self-configuring wireless digital communication network that is designed to operate under adverse conditions such as low bandwidth and high latency, especially for emergency situations where the existing communication infrastructure is inoperable for any reason. 
+
+R-Link is a low bandwidth or offline communication application designed specifically for communication on this network.
 
 <img src="./screenshots/screenshot.png">
 
