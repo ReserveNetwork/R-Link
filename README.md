@@ -1,18 +1,18 @@
 ## What is R-Link & Reserve Network??
 
-Reserve Network (RNet) is a self-configuring wireless digital communication network that is designed to operate under adverse conditions such as low bandwidth and high latency, especially for emergency situations where the existing communication infrastructure is inoperable for any reason. 
+[Reserve Network](reserve.network) (RNet) is a self-configuring wireless digital communication network that is designed to operate under adverse conditions such as low bandwidth and high latency, especially for emergency situations where the existing communication infrastructure is inoperable for any reason. 
 
-R-Link is a low bandwidth or offline communication application designed specifically for communication on this network.
+[R-Link ](https://github.com/ReserveNetwork/R-Link)is a low bandwidth or offline communication application designed specifically for communication on this network.
 
 <img src="./screenshots/screenshot.png">
 
 ## What does it do?
 
-- It can send and receive messages, files and audio calls with peers;
+- It can send and receive messages, files, video & audio calls with peers;
     - Over your local network through Ethernet and WiFi, completely automatically.
     - Over the internet by connecting through a server hosted by yourself or the community.
-    - Over low-powered, license-free, ISM band LoRa Radio, with an [RNode](https://github.com/markqvist/RNode_Firmware).
-    - ...and via any other interface supported by the Reticulum Network Stack.
+    - Over low-powered, license-free, ISM band LoRa Radio, with an [RNode](https://github.com/ReserveNetwork/RNET_Firmware).
+    - ...and via any other interface supported by the Reserve Network Stack.
 - It communicates securely. Messages can only be decrypted by the intended destination.
 - It can communicate with any other existing [LXMF](https://github.com/markqvist/lxmf) client, such as [Sideband](https://github.com/markqvist/Sideband/) and [Nomadnet](https://github.com/markqvist/nomadnet).
 - It can download files and browse micron pages (decentralised websites) hosted on [Nomad Network](https://github.com/markqvist/nomadnet) nodes.
@@ -21,7 +21,7 @@ R-Link is a low bandwidth or offline communication application designed specific
 
 - Supports sending and receiving messages between [R-Link](https://github.com/ReserveNetwork/r-link), [Reticulum MeshChat](https://github.com/liamcottle/reticulum-meshchat), [Sideband](https://github.com/markqvist/Sideband/) and [Nomadnet](https://github.com/markqvist/nomadnet).
 - Supports receiving and saving images and attachments sent from Sideband.
-- Supports sending images, voice recordings and file attachments.
+- Supports sending images, voice recordings, ASCII Video Message file attachments.
 - Supports saving inbound and outbound messages to a local database.
 - Supports sending an announce to the network.
 - Supports setting a custom display name to send in your announce.
@@ -31,6 +31,7 @@ R-Link is a low bandwidth or offline communication application designed specific
 ## Beta Features
 
 - Support for Audio Calls to other [RLink](https://github.com/ReserveNetwork/r-link) users.
+  - Support for Video Message to other [RLink](https://github.com/ReserveNetwork/r-link) users.
   - Audio is encoded with [codec2](https://github.com/drowe67/codec2) to support low bandwidth links.
   - Using a microphone requires using the web ui over localhost or https, due to [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) secure context.
   - I have tested two-way audio calls over LoRa with a single hop. It works well when a [reasonable bitrate](https://unsigned.io/understanding-lora-parameters/) is configured on the RNode.
@@ -38,6 +39,14 @@ R-Link is a low bandwidth or offline communication application designed specific
 - Support for browsing pages, and downloading files hosted on Nomad Network Nodes.
 
 > NOTE: micron format parsing is still in development, some pages may not render or work correctly at all.
+
+## Download
+
+You can download the latest version for Windows, Mac and Linux from the [releases](https://github.com/ReserveNetwork/r-link/releases) page.
+
+Alternatively, you can download the source and run it manually from a command line.
+
+See the ["How to use it?"](#how-to-use-it) section below on how to do this.
 
 ## Download
 
