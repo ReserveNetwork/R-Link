@@ -58,7 +58,7 @@ See the ["How to use it?"](#how-to-use-it) section below on how to do this.
 
 ## Getting Started
 
-Once you've downloaded, installed and launched Reserve Network R-Link, there's a few things you need to do in order to start communicating with other people on the network.
+Once you've downloaded, installed and launched R-Link, there's a few things you need to do in order to start communicating with other people on the network.
 
 1. Create an Identity
 2. Configure your Display Name
@@ -68,13 +68,13 @@ Once you've downloaded, installed and launched Reserve Network R-Link, there's a
 
 **Create an Identity**
 
-On the Reticulum Network, anyone can have any number of Identities. You may opt to use your real name, or you may decide to be completely anonymous. The choice is yours.
+On the Reserve Network, anyone can have any number of Identities. You may opt to use your real name, or you may decide to be completely anonymous. The choice is yours.
 
-A Reticulum Identity is a public/private key-pair. You control the private key used to generate destination addresses, encrypt content and prove receipt of data with unforgeable delivery acknowledgements.
+A Reserve Network Identity is a public/private key-pair. You control the private key used to generate destination addresses, encrypt content and prove receipt of data with unforgeable delivery acknowledgements.
 
 Your public key is shared with the network when you send an announce, and allows others on the network to automatically discover a route to a destination you control.
 
-At this time, Reserve Network R-Link generates a new Identity the first time you launch it. A future update will allow you to create and manage multiple identities.
+At this time, R-Link generates a new Identity the first time you launch it. A future update will allow you to create and manage multiple identities.
 
 For now, if you want to change, or reset your identity, you can access the identity file at `~/.r-link/identity`.
 
@@ -86,7 +86,7 @@ You can do this in the `My Identity` section in the bottom left corner. Enter a 
 
 **Send an Announce**
 
-When using the Reticulum Network, in order to be contactable, you need to send an `Announce`. You can send an announce as often, or as infrequently as you like.
+When using the Reserve Network, in order to be contactable, you need to send an `Announce`. You can send an announce as often, or as infrequently as you like.
 
 Sending an announce allows other peers on the network to discover the next-hop across the network their packets should take to arrive at a destination that your identity controls.
 
@@ -98,9 +98,9 @@ To allow them to discover the new path their packets should take to reach you, y
 
 **Discover Peers and start sending messages**
 
-In the Reticulum Network, you can control an unlimited number of destination addresses. One of these can be an [LXMF](https://github.com/markqvist/lxmf) delivery address.
+In the Reserve Network, you can control an unlimited number of destination addresses. One of these can be an [LXMF](https://github.com/markqvist/lxmf) delivery address.
 
-Your Reticulum Identity allows you to have an LXMF address. Think of an LXMF address as your very own, secure, end-to-end encrypted, unspoofable, email address routed over a mesh network.
+Your Reserve Identity allows you to have an LXMF address. Think of an LXMF address as your very own, secure, end-to-end encrypted, unspoofable, email address routed over a mesh network.
 
 When someone else on the network announces themselves (more specifically, their LXMF address), they will show up in the Peers tab.
 
