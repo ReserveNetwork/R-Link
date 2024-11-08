@@ -23,6 +23,7 @@ export default {
       locations: [],
       onLine: false,
       p: null,
+      config: null,
     };
   },
   methods: {
@@ -159,12 +160,21 @@ export default {
         console.error(e);
       }
     },
+    async getConfig() {
+      try {
+        const response = await window.axios.get("/api/v1/config");
+        this.config = response.data.config;
+      } catch (e) {
+        // do nothing if failed to load config
+        console.log(e);
+      }
+    },
     setLocations() {
       if (this.map) {
         navigator.geolocation.getCurrentPosition((position) => {
           this.center = [position.coords.latitude, position.coords.longitude, position.coords.altitude];
           this.zoom = this.getZoomOption();
-          L.marker(this.center).addTo(this.map);
+          L.marker(this.center).bindPopup("You are here").addTo(this.map);
           L.circle(this.center, {
             color: 'red',
             fillColor: '#f03',
@@ -175,7 +185,24 @@ export default {
           this.map.setView(this.center, this.zoom);
         }, (error) => {
           console.error(error);
-          this.center = [41.3851, 36.519];
+
+          if (this.config.location) {
+            const latitude = this.config.location.split(",")[0];
+            const longitude = this.config.location.split(",")[1];
+            this.center = [latitude, longitude];
+            console.log(latitude, longitude);
+          } else {
+            this.center = [41.3851, 36.519];
+          }
+
+          L.marker(this.center).bindPopup("You are here").addTo(this.map);
+          L.circle(this.center, {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.5,
+            radius: 50000,
+          }).addTo(this.map);
+
           this.zoom = this.getZoomOption();
           this.map.setView(this.center, this.zoom);
         });
@@ -209,6 +236,7 @@ export default {
     }
   },
   mounted() {
+    this.getConfig();
     this.p = new Ping({
       favicon: "",
     });
