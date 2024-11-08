@@ -6,6 +6,10 @@ import Ping from "ping.js";
 
 const ONLINE_MAX_ZOOM = 36;
 const OFFLINE_MAX_ZOOM = 5;
+const RADIUS = 5000;
+const OPACITY = 0.5;
+const FILL_COLOR = "#f03";
+const COLOR = 'red';
 
 export default {
   name: "UserLocationMap",
@@ -176,10 +180,10 @@ export default {
           this.zoom = this.getZoomOption();
           L.marker(this.center).bindPopup("You are here").addTo(this.map);
           L.circle(this.center, {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.5,
-            radius: 5000,
+            color: COLOR,
+            fillColor: FILL_COLOR,
+            fillOpacity: OPACITY,
+            radius: RADIUS,
           }).addTo(this.map);
 
           this.map.setView(this.center, this.zoom);
@@ -197,10 +201,10 @@ export default {
 
           L.marker(this.center).bindPopup("You are here").addTo(this.map);
           L.circle(this.center, {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.5,
-            radius: 50000,
+            color: COLOR,
+            fillColor: FILL_COLOR,
+            fillOpacity: OPACITY,
+            radius: RADIUS,
           }).addTo(this.map);
 
           this.zoom = this.getZoomOption();
