@@ -19,6 +19,19 @@
                 </div>
                 <div class="divide-y divide-gray-200">
 
+                    <!-- Istanbul Reserve Network -->
+                    <div class="flex px-2 py-1">
+                        <div class="my-auto mr-auto">
+                            <div>R-NET Istanbul / Testnet</div>
+                            <div class="text-xs">istanbul.reserve.network:9034</div>
+                        </div>
+                        <div class="ml-2 my-auto">
+                            <button @click="newInterfaceName='R-NET Istanbul / Testnet';newInterfaceType='TCPClientInterface';newInterfaceTargetHost='istanbul.reserve.network';newInterfaceTargetPort='9034'" type="button" class="inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
+                                <span>Use Interface</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="flex px-2 py-1">
                         <div class="my-auto mr-auto">
                             <div>RNS Testnet Amsterdam</div>

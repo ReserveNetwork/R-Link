@@ -179,7 +179,7 @@ export default {
             color: 'red',
             fillColor: '#f03',
             fillOpacity: 0.5,
-            radius: 50000,
+            radius: 5000,
           }).addTo(this.map);
 
           this.map.setView(this.center, this.zoom);
