@@ -1,6 +1,6 @@
 {
-  "name": "r-link",
-  "version": "1.0.0",
+  "name": "R-Link",
+  "version": "1.0.1",
   "description": "",
   "main": "electron/main.js",
   "scripts": {
