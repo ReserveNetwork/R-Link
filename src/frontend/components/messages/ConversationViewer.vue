@@ -10,7 +10,7 @@
       <!-- peer info -->
       <div class="flex gap-2">
         <div class="">
-          <img v-if="selectedPeer.avatar" :src="selectedPeer.avatar" class="w-10 h-10 rounded-full" alt="Avatar"/>
+          <img v-if="selectedPeer.avatar" :src="`data:image/webp;base64,${selectedPeer.avatar}`" class="w-10 h-10 rounded-full" alt="Avatar"/>
           <div v-else class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                  stroke="currentColor" class="size-6">

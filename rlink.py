@@ -2083,10 +2083,11 @@ class RLink:
                 return
 
             fields = json.loads(db_lxmf_message.fields)
+
             avatar = None
             if "avatar" in fields:
                 avatar = fields["avatar"]["avatar"]
-                self.db_upsert_avatar(db_lxmf_message.destination_hash, avatar, True)
+                self.db_upsert_avatar(db_lxmf_message.source_hash, avatar, True)
 
             asyncio.run(self.websocket_broadcast(json.dumps({
                 "type": "lxmf.delivery",
@@ -2604,20 +2605,22 @@ class RLink:
     # get avatar to show for an lxmf conversation
     # currently, this will use the app data from the most recent announce
     def get_lxmf_conversation_avatar(self, destination_hash):
+        try:
+            avatars = database.Avatar.select()
+            # for a in avatars:
+            #     print(a)
+            # get profile.avatar announce from database for the provided destination hash
+            avatar = (database.Avatar.select()
+                      .where(database.Avatar.destination_hash == destination_hash)
+                      .where(database.Avatar.avatar is not None)
+                      .first())
 
-        # get profile.avatar announce from database for the provided destination hash
-        avatar_announce = (database.Announce.select()
-                           .where(database.Announce.aspect == "profile.avatar")
-                           .where(database.Announce.destination_hash == destination_hash)
-                           .get_or_none())
+            if avatar is not None and avatar.avatar is not None:
+                return avatar.avatar
 
-        # if app data is available in database, it should be base64 encoded text that was announced
-        # we will return the parsed avatar display name as the conversation name
-        if avatar_announce is not None and avatar_announce.app_data is not None:
-            return self.parse_avatar_display_name(app_data_base64=avatar_announce.app_data)
-
-        # announce did not have app data, so provide a fallback name
-        return None
+            return None
+        except Exception as e:
+            print(e)
 
     # reads the lxmf display name from the provided base64 app data
     def parse_lxmf_display_name(self, app_data_base64: str, default_value: str | None = "Anonymous Peer"):
