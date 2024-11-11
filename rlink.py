@@ -2208,7 +2208,8 @@ class RLink:
                            image_field: LxmfImageField = None,
                            audio_field: LxmfAudioField = None,
                            video_field: LxmfVideoField = None,
-                           file_attachments_field: LxmfFileAttachmentsField = None) -> LXMF.LXMessage:
+                           file_attachments_field: LxmfFileAttachmentsField = None,
+                           delivery_method: str = None) -> LXMF.LXMessage:
 
         # convert destination hash to bytes
         destination_hash = bytes.fromhex(destination_hash)
