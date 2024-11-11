@@ -2077,19 +2077,17 @@ class RLink:
             # upsert lxmf message to database
             self.db_upsert_lxmf_message(lxmf_message)
 
-            # check message has avatar fields in avatar
-            if "avatar" in lxmf_message.fields and lxmf_message.incoming:
-                avatar = lxmf_message.fields["avatar"]
-                if "avatar" in avatar:
-                    avatar_bytes = bytes(avatar[0], "utf-8")
-                    self.db_upsert_avatar(lxmf_message.destination_hash.hex(), avatar_bytes, True)
-
             # find message from database
             db_lxmf_message = database.LxmfMessage.get_or_none(database.LxmfMessage.hash == lxmf_message.hash.hex())
             if db_lxmf_message is None:
                 return
 
-            # send received lxmf message data to all websocket clients
+            fields = json.loads(db_lxmf_message.fields)
+            avatar = None
+            if "avatar" in fields:
+                avatar = fields["avatar"]["avatar"]
+                self.db_upsert_avatar(db_lxmf_message.destination_hash, avatar, True)
+
             asyncio.run(self.websocket_broadcast(json.dumps({
                 "type": "lxmf.delivery",
                 "lxmf_message": self.convert_db_lxmf_message_to_dict(db_lxmf_message),
@@ -2170,20 +2168,20 @@ class RLink:
         query = query.on_conflict(conflict_target=[database.LxmfMessage.hash], update=data)
         query.execute()
 
-    def db_upsert_avatar(self, destination_hash: str, avatar_bytes: bytes|None, is_incoming: bool):
+    def db_upsert_avatar(self, destination_hash: str, avatar_bytes: str | None, is_incoming: bool):
 
-            # prepare data to insert or update
-            data = {
-                "destination_hash": destination_hash,
-                "avatar": avatar_bytes,
-                "is_incoming": is_incoming,
-                "updated_at": datetime.now(timezone.utc),
-            }
+        # prepare data to insert or update
+        data = {
+            "destination_hash": destination_hash,
+            "avatar": avatar_bytes,
+            "is_incoming": is_incoming,
+            "updated_at": datetime.now(timezone.utc),
+        }
 
-            # upsert to database
-            query = database.Avatar.insert(data)
-            query = query.on_conflict(conflict_target=[database.Avatar.destination_hash], update=data)
-            query.execute()
+        # upsert to database
+        query = database.Avatar.insert(data)
+        query = query.on_conflict(conflict_target=[database.Avatar.destination_hash], update=data)
+        query.execute()
 
     # upserts the provided announce to the database
     def db_upsert_announce(self, identity: RNS.Identity, destination_hash: bytes, aspect: str, app_data: bytes):
