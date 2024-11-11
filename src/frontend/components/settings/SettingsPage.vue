@@ -31,6 +31,13 @@
                 <label for="avatar" class="text-sm font-medium text-gray-900">Change Avatar</label>
                 <input id="avatar" type="file" @change="onAvatarChange" class="text-sm text-gray-900">
               </div>
+              <!-- Delete avatar if set -->
+              <div v-if="config.avatar" class="ml-auto">
+                <button @click="onAvatarChange" type="button"
+                        class="inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
 

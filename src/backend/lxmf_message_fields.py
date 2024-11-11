@@ -36,3 +36,8 @@ class LxmfFileAttachmentsField:
     def __init__(self, file_attachments: List[LxmfFileAttachment]):
         self.file_attachments = file_attachments
 
+
+class LxmfAvatarField:
+
+    def __init__(self, avatar_bytes: str):
+        self.avatar_bytes = avatar_bytes

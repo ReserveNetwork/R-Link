@@ -10,7 +10,6 @@ migrator = SqliteMigrator(database)
 
 # migrates the database
 def migrate(current_version):
-
     # migrate to version 2
     if current_version < 2:
         migrate_database(
@@ -41,7 +40,6 @@ class BaseModel(Model):
 
 
 class Config(BaseModel):
-
     id = BigAutoField()
     key = CharField(unique=True)
     value = TextField()
@@ -54,10 +52,10 @@ class Config(BaseModel):
 
 
 class Announce(BaseModel):
-
     id = BigAutoField()
     destination_hash = CharField(unique=True)  # unique destination hash that was announced
-    aspect = TextField(index=True)  # aspect is not included in announce, but we want to filter saved announces by aspect
+    aspect = TextField(
+        index=True)  # aspect is not included in announce, but we want to filter saved announces by aspect
     identity_hash = CharField(index=True)  # identity hash that announced the destination
     identity_public_key = CharField()  # base64 encoded public key, incase we want to recreate the identity manually
     app_data = TextField(null=True)  # base64 encoded app data bytes
@@ -70,8 +68,21 @@ class Announce(BaseModel):
         table_name = "announces"
 
 
-class CustomDestinationDisplayName(BaseModel):
+class Avatar(BaseModel):
+    id = BigAutoField()
+    destination_hash = CharField(unique=True)  # unique destination hash
+    avatar = TextField(null=True)  # base64 encoded nullable avatar bytes
+    is_incoming = BooleanField(default=False)  # if true, we should ignore avatar, it's set to None by default on incoming messages
 
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    updated_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    # define table name
+    class Meta:
+        table_name = "avatars"
+
+
+class CustomDestinationDisplayName(BaseModel):
     id = BigAutoField()
     destination_hash = CharField(unique=True)  # unique destination hash
     display_name = CharField()  # custom display name for the destination hash
@@ -85,7 +96,6 @@ class CustomDestinationDisplayName(BaseModel):
 
 
 class LxmfMessage(BaseModel):
-
     id = BigAutoField()
     hash = CharField(unique=True)  # unique lxmf message hash
     source_hash = CharField(index=True)
@@ -112,7 +122,6 @@ class LxmfMessage(BaseModel):
 
 
 class LxmfConversationReadState(BaseModel):
-
     id = BigAutoField()
     destination_hash = CharField(unique=True)  # unique destination hash
     last_read_at = DateTimeField()

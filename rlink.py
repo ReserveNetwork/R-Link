@@ -15,7 +15,7 @@ import LXMF
 from LXMF import LXMRouter
 from aiohttp import web, WSMessage, WSMsgType, WSCloseCode
 import asyncio
-import base64
+import base64, gzip
 import webbrowser
 
 from peewee import SqliteDatabase
@@ -24,7 +24,7 @@ from serial.tools import list_ports
 import database
 from src.backend.announce_handler import AnnounceHandler
 from src.backend.lxmf_message_fields import LxmfImageField, LxmfFileAttachmentsField, LxmfFileAttachment, \
-    LxmfAudioField, LxmfVideoField
+    LxmfAudioField, LxmfVideoField, LxmfAvatarField
 from src.backend.audio_call_manager import AudioCall, AudioCallManager
 
 
@@ -72,6 +72,7 @@ class RLink:
         self.db.create_tables([
             database.Config,
             database.Announce,
+            database.Avatar,
             database.CustomDestinationDisplayName,
             database.LxmfMessage,
             database.LxmfConversationReadState,
@@ -140,8 +141,6 @@ class RLink:
         # handle received announces based on location
         RNS.Transport.register_announce_handler(
             AnnounceHandler("telemetry.location", self.on_location_announce_received))
-        RNS.Transport.register_announce_handler(
-            AnnounceHandler("profile.avatar", self.on_avatar_announce_received))
 
         # remember websocket clients
         self.websocket_clients: List[web.WebSocketResponse] = []
@@ -157,15 +156,6 @@ class RLink:
             RNS.Destination.SINGLE,
             "telemetry",
             "location",
-        )
-
-        # register avatar announce
-        self.avatar_manager = RNS.Destination(
-            self.identity,
-            RNS.Destination.IN,
-            RNS.Destination.SINGLE,
-            "profile",
-            "avatar",
         )
 
         # start background thread for auto announce loop
@@ -1544,10 +1534,6 @@ class RLink:
         if self.config.location.get() is not None and self.config.telemetry_enabled.get():
             self.location_manager.announce(app_data=self.config.location.get().encode("utf-8"))
 
-        # send announce for avatar (if set)
-        if self.config.avatar.get() is not None:
-            self.avatar_manager.announce(app_data=self.config.avatar.get().encode("utf-8"))
-
         # tell websocket clients we just announced
         await self.send_announced_to_websocket_clients()
 
@@ -1928,6 +1914,11 @@ class RLink:
                     "video_bytes": video_bytes,
                 }
 
+            if field_type == LXMF.FIELD_CUSTOM_DATA:
+                fields["avatar"] = {
+                    "avatar": bytes.decode(value[0], "utf-8"),
+                }
+
         # convert 0.0-1.0 progress to 0.00-100 percentage
         progress_percentage = round(lxmf_message.progress * 100, 2)
 
@@ -2039,8 +2030,6 @@ class RLink:
             display_name = self.parse_nomadnetwork_node_display_name(announce.app_data)
         elif announce.aspect == "telemetry.location":
             display_name = self.parse_location(announce.app_data)
-        elif announce.aspect == "profile.avatar":
-            display_name = self.parse_avatar_display_name(announce.app_data)
 
         return {
             "id": announce.id,
@@ -2087,6 +2076,13 @@ class RLink:
 
             # upsert lxmf message to database
             self.db_upsert_lxmf_message(lxmf_message)
+
+            # check message has avatar fields in avatar
+            if "avatar" in lxmf_message.fields and lxmf_message.incoming:
+                avatar = lxmf_message.fields["avatar"]
+                if "avatar" in avatar:
+                    avatar_bytes = bytes(avatar[0], "utf-8")
+                    self.db_upsert_avatar(lxmf_message.destination_hash.hex(), avatar_bytes)
 
             # find message from database
             db_lxmf_message = database.LxmfMessage.get_or_none(database.LxmfMessage.hash == lxmf_message.hash.hex())
@@ -2173,6 +2169,20 @@ class RLink:
         query = database.LxmfMessage.insert(data)
         query = query.on_conflict(conflict_target=[database.LxmfMessage.hash], update=data)
         query.execute()
+
+    def db_upsert_avatar(self, destination_hash: str, avatar_bytes: bytes):
+
+            # prepare data to insert or update
+            data = {
+                "destination_hash": destination_hash,
+                "avatar": avatar_bytes,
+                "updated_at": datetime.now(timezone.utc),
+            }
+
+            # upsert to database
+            query = database.Avatar.insert(data)
+            query = query.on_conflict(conflict_target=[database.Avatar.destination_hash], update=data)
+            query.execute()
 
     # upserts the provided announce to the database
     def db_upsert_announce(self, identity: RNS.Identity, destination_hash: bytes, aspect: str, app_data: bytes):
@@ -2289,6 +2299,14 @@ class RLink:
 
         lxmf_message.fields = {}
 
+        avatar = database.Avatar.get_or_none(database.Avatar.destination_hash == destination_hash.hex())
+
+        # send avatar if not send before
+        if avatar is None and self.config.avatar.get():
+            lxmf_message.fields[LXMF.FIELD_CUSTOM_DATA] = [
+                self.config.avatar.get().encode("utf-8"),
+            ]
+
         # add file attachments field
         if file_attachments_field is not None:
 
@@ -2371,6 +2389,9 @@ class RLink:
             # check if we should stop updating
             if has_delivered or has_propagated or has_failed:
                 should_update_message = False
+
+            if has_delivered or has_propagated:
+                database.Avatar.insert(destination_hash=lxmf_message.destination_hash).on_conflict_replace().execute()
 
     # handle an announce received from reticulum, for an audio call address
     # NOTE: cant be async, as Reticulum doesn't await it
@@ -2551,27 +2572,6 @@ class RLink:
             "announce": self.convert_db_announce_to_dict(announce),
         })))
 
-    # handle an announce received from rlink, for a avatar
-    # NOTE: cant be async, as Reticulum doesn't await it
-    def on_avatar_announce_received(self, aspect, destination_hash, announced_identity, app_data):
-
-            # log received announce
-            print("Received an announce from " + RNS.prettyhexrep(destination_hash) + " for [avatar]")
-
-            # upsert announce to database
-            self.db_upsert_announce(announced_identity, destination_hash, aspect, app_data)
-
-            # find announce from database
-            announce = database.Announce.get_or_none(database.Announce.destination_hash == destination_hash.hex())
-            if announce is None:
-                return
-
-            # send database announce to all websocket clients
-            asyncio.run(self.websocket_broadcast(json.dumps({
-                "type": "announce",
-                "announce": self.convert_db_announce_to_dict(announce),
-            })))
-
     # gets the custom display name a user has set for the provided destination hash
     def get_custom_destination_display_name(self, destination_hash: str):
 
@@ -2606,19 +2606,19 @@ class RLink:
     # currently, this will use the app data from the most recent announce
     def get_lxmf_conversation_avatar(self, destination_hash):
 
-            # get profile.avatar announce from database for the provided destination hash
-            avatar_announce = (database.Announce.select()
-                            .where(database.Announce.aspect == "profile.avatar")
-                            .where(database.Announce.destination_hash == destination_hash)
-                            .get_or_none())
+        # get profile.avatar announce from database for the provided destination hash
+        avatar_announce = (database.Announce.select()
+                           .where(database.Announce.aspect == "profile.avatar")
+                           .where(database.Announce.destination_hash == destination_hash)
+                           .get_or_none())
 
-            # if app data is available in database, it should be base64 encoded text that was announced
-            # we will return the parsed avatar display name as the conversation name
-            if avatar_announce is not None and avatar_announce.app_data is not None:
-                return self.parse_avatar_display_name(app_data_base64=avatar_announce.app_data)
+        # if app data is available in database, it should be base64 encoded text that was announced
+        # we will return the parsed avatar display name as the conversation name
+        if avatar_announce is not None and avatar_announce.app_data is not None:
+            return self.parse_avatar_display_name(app_data_base64=avatar_announce.app_data)
 
-            # announce did not have app data, so provide a fallback name
-            return None
+        # announce did not have app data, so provide a fallback name
+        return None
 
     # reads the lxmf display name from the provided base64 app data
     def parse_lxmf_display_name(self, app_data_base64: str, default_value: str | None = "Anonymous Peer"):
