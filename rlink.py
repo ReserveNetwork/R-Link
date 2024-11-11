@@ -2082,7 +2082,7 @@ class RLink:
                 avatar = lxmf_message.fields["avatar"]
                 if "avatar" in avatar:
                     avatar_bytes = bytes(avatar[0], "utf-8")
-                    self.db_upsert_avatar(lxmf_message.destination_hash.hex(), avatar_bytes)
+                    self.db_upsert_avatar(lxmf_message.destination_hash.hex(), avatar_bytes, True)
 
             # find message from database
             db_lxmf_message = database.LxmfMessage.get_or_none(database.LxmfMessage.hash == lxmf_message.hash.hex())
@@ -2170,12 +2170,13 @@ class RLink:
         query = query.on_conflict(conflict_target=[database.LxmfMessage.hash], update=data)
         query.execute()
 
-    def db_upsert_avatar(self, destination_hash: str, avatar_bytes: bytes):
+    def db_upsert_avatar(self, destination_hash: str, avatar_bytes: bytes|None, is_incoming: bool):
 
             # prepare data to insert or update
             data = {
                 "destination_hash": destination_hash,
                 "avatar": avatar_bytes,
+                "is_incoming": is_incoming,
                 "updated_at": datetime.now(timezone.utc),
             }
 
@@ -2390,8 +2391,8 @@ class RLink:
             if has_delivered or has_propagated or has_failed:
                 should_update_message = False
 
-            if has_delivered or has_propagated:
-                database.Avatar.insert(destination_hash=lxmf_message.destination_hash).on_conflict_replace().execute()
+            if has_delivered:
+                self.db_upsert_avatar(lxmf_message.destination_hash.hex(), None, False)
 
     # handle an announce received from reticulum, for an audio call address
     # NOTE: cant be async, as Reticulum doesn't await it
