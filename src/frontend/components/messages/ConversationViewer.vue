@@ -450,7 +450,7 @@
                 <path
                     d="M14.25 5.25a5.23 5.23 0 0 0-1.279-3.434 9.768 9.768 0 0 1 6.963 6.963A5.23 5.23 0 0 0 16.5 7.5h-1.875a.375.375 0 0 1-.375-.375V5.25Z"/>
               </svg>
-              <span class="ml-1 hidden sm:inline-block">Add Files</span>
+              <span class="ml-1 hidden xl:inline-block whitespace-nowrap">Add Files</span>
             </button>
 
             <!-- add image -->
@@ -461,7 +461,7 @@
                       d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z"
                       clip-rule="evenodd"/>
               </svg>
-              <span class="ml-1 hidden sm:inline-block">Add Image</span>
+              <span class="ml-1 hidden xl:inline-block whitespace-nowrap">Add Image</span>
             </button>
 
             <!-- add audio -->
@@ -484,12 +484,14 @@
             </div>
 
             <!-- send message -->
-            <button @click="sendMessage" :disabled="!canSendMessage" type="button"
-                    class="ml-auto my-auto inline-flex items-center gap-x-1 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-                    :class="[ canSendMessage ? 'bg-blue-500 hover:bg-blue-400 focus-visible:outline-blue-500' : 'bg-gray-400 focus-visible:outline-gray-500 cursor-not-allowed']">
-              <span v-if="isSendingMessage">Sending...</span>
-              <span v-else>Send</span>
-            </button>
+            <div class="ml-auto my-auto">
+                <SendMessageButton
+                    @send="sendMessage"
+                    @delivery-method-changed="this.newMessageDeliveryMethod = $event"
+                    :is-sending-message="isSendingMessage"
+                    :can-send-message="canSendMessage"
+                    :delivery-method="newMessageDeliveryMethod"/>
+            </div> 
 
           </div>
 
@@ -527,6 +529,7 @@ import NotificationUtils from "../../js/NotificationUtils";
 import WebSocketConnection from "../../js/WebSocketConnection";
 import AddAudioButton from "./AddAudioButton.vue";
 import moment from "moment";
+import SendMessageButton from "./SendMessageButton.vue";
 import AddVideoButton from "./AddVideoButton.vue";
 import TextAsciiPanel from "./TextAsciiPanel.vue";
 import PlayVideoButton from "./PlayVideoButton.vue";
@@ -534,6 +537,7 @@ import PlayVideoButton from "./PlayVideoButton.vue";
 export default {
   name: 'ConversationViewer',
   components: {
+    SendMessageButton,
     PlayVideoButton,
     TextAsciiPanel,
     AddVideoButton,
@@ -556,6 +560,7 @@ export default {
       isLoadingPrevious: false,
       hasMorePrevious: true,
 
+      newMessageDeliveryMethod: null,
       newMessageText: "",
       newMessageImage: null,
       newMessageImageUrl: null,
@@ -1324,6 +1329,7 @@ export default {
 
         // send message to reticulum
         const response = await window.axios.post(`/api/v1/lxmf-messages/send`, {
+          "delivery_method": this.newMessageDeliveryMethod,
           "lxmf_message": {
             "destination_hash": this.selectedPeer.destination_hash,
             "content": this.newMessageText,
