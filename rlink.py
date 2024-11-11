@@ -140,6 +140,8 @@ class RLink:
         # handle received announces based on location
         RNS.Transport.register_announce_handler(
             AnnounceHandler("telemetry.location", self.on_location_announce_received))
+        RNS.Transport.register_announce_handler(
+            AnnounceHandler("profile.avatar", self.on_avatar_announce_received))
 
         # remember websocket clients
         self.websocket_clients: List[web.WebSocketResponse] = []
@@ -155,6 +157,15 @@ class RLink:
             RNS.Destination.SINGLE,
             "telemetry",
             "location",
+        )
+
+        # register avatar announce
+        self.avatar_manager = RNS.Destination(
+            self.identity,
+            RNS.Destination.IN,
+            RNS.Destination.SINGLE,
+            "profile",
+            "avatar",
         )
 
         # start background thread for auto announce loop
@@ -1275,9 +1286,9 @@ class RLink:
             # get delivery method
             delivery_method = None
             if "delivery_method" in data:
-                delivery_method = data["delivery_method"]            
+                delivery_method = data["delivery_method"]
 
-            # get data from json
+                # get data from json
             destination_hash = data["lxmf_message"]["destination_hash"]
             content = data["lxmf_message"]["content"]
             fields = {}
@@ -1465,6 +1476,7 @@ class RLink:
 
                 # add to conversations
                 conversations.append({
+                    "avatar": self.get_lxmf_conversation_avatar(other_user_hash),
                     "display_name": self.get_lxmf_conversation_name(other_user_hash),
                     "custom_display_name": self.get_custom_destination_display_name(other_user_hash),
                     "destination_hash": other_user_hash,
@@ -1532,6 +1544,10 @@ class RLink:
         if self.config.location.get() is not None and self.config.telemetry_enabled.get():
             self.location_manager.announce(app_data=self.config.location.get().encode("utf-8"))
 
+        # send announce for avatar (if set)
+        if self.config.avatar.get() is not None:
+            self.avatar_manager.announce(app_data=self.config.avatar.get().encode("utf-8"))
+
         # tell websocket clients we just announced
         await self.send_announced_to_websocket_clients()
 
@@ -1548,6 +1564,10 @@ class RLink:
         await self.send_config_to_websocket_clients()
 
     async def update_config(self, data):
+
+        # update avatar
+        if "avatar" in data:
+            self.config.avatar.set(data["avatar"])
 
         # update display name in config
         if "display_name" in data and data["display_name"] != "":
@@ -1790,6 +1810,7 @@ class RLink:
     # returns a dictionary of config
     def get_config_dict(self):
         return {
+            "avatar": self.config.avatar.get(),
             "display_name": self.config.display_name.get(),
             "identity_hash": self.identity.hexhash,
             "lxmf_address_hash": self.local_lxmf_destination.hexhash,
@@ -2018,6 +2039,8 @@ class RLink:
             display_name = self.parse_nomadnetwork_node_display_name(announce.app_data)
         elif announce.aspect == "telemetry.location":
             display_name = self.parse_location(announce.app_data)
+        elif announce.aspect == "profile.avatar":
+            display_name = self.parse_avatar_display_name(announce.app_data)
 
         return {
             "id": announce.id,
@@ -2234,7 +2257,8 @@ class RLink:
             raise Exception("Could not find path to destination. Try again later.")
 
         # create destination for recipients lxmf delivery address
-        lxmf_destination = RNS.Destination(destination_identity, RNS.Destination.OUT, RNS.Destination.SINGLE, "lxmf", "delivery")
+        lxmf_destination = RNS.Destination(destination_identity, RNS.Destination.OUT, RNS.Destination.SINGLE, "lxmf",
+                                           "delivery")
 
         # determine how the user wants to send the message
         desired_delivery_method = None
@@ -2250,8 +2274,8 @@ class RLink:
 
             # send messages over a direct link by default
             desired_delivery_method = LXMF.LXMessage.DIRECT
-            if not self.message_router.delivery_link_available(destination_hash) and RNS.Identity.current_ratchet_id(destination_hash) != None:
-
+            if not self.message_router.delivery_link_available(destination_hash) and RNS.Identity.current_ratchet_id(
+                    destination_hash) != None:
                 # since there's no link established to the destination, it's faster to send opportunistically
                 # this is because it takes several packets to establish a link, and then we still have to send the message over it
                 # oppotunistic mode will send the message in a single packet (if the message is small enough, otherwise it falls back to a direct link)
@@ -2527,6 +2551,27 @@ class RLink:
             "announce": self.convert_db_announce_to_dict(announce),
         })))
 
+    # handle an announce received from rlink, for a avatar
+    # NOTE: cant be async, as Reticulum doesn't await it
+    def on_avatar_announce_received(self, aspect, destination_hash, announced_identity, app_data):
+
+            # log received announce
+            print("Received an announce from " + RNS.prettyhexrep(destination_hash) + " for [avatar]")
+
+            # upsert announce to database
+            self.db_upsert_announce(announced_identity, destination_hash, aspect, app_data)
+
+            # find announce from database
+            announce = database.Announce.get_or_none(database.Announce.destination_hash == destination_hash.hex())
+            if announce is None:
+                return
+
+            # send database announce to all websocket clients
+            asyncio.run(self.websocket_broadcast(json.dumps({
+                "type": "announce",
+                "announce": self.convert_db_announce_to_dict(announce),
+            })))
+
     # gets the custom display name a user has set for the provided destination hash
     def get_custom_destination_display_name(self, destination_hash: str):
 
@@ -2556,6 +2601,24 @@ class RLink:
 
         # announce did not have app data, so provide a fallback name
         return "Anonymous Peer"
+
+    # get avatar to show for an lxmf conversation
+    # currently, this will use the app data from the most recent announce
+    def get_lxmf_conversation_avatar(self, destination_hash):
+
+            # get profile.avatar announce from database for the provided destination hash
+            avatar_announce = (database.Announce.select()
+                            .where(database.Announce.aspect == "profile.avatar")
+                            .where(database.Announce.destination_hash == destination_hash)
+                            .get_or_none())
+
+            # if app data is available in database, it should be base64 encoded text that was announced
+            # we will return the parsed avatar display name as the conversation name
+            if avatar_announce is not None and avatar_announce.app_data is not None:
+                return self.parse_avatar_display_name(app_data_base64=avatar_announce.app_data)
+
+            # announce did not have app data, so provide a fallback name
+            return None
 
     # reads the lxmf display name from the provided base64 app data
     def parse_lxmf_display_name(self, app_data_base64: str, default_value: str | None = "Anonymous Peer"):
@@ -2592,6 +2655,13 @@ class RLink:
             return app_data_bytes.decode("utf-8")
         except:
             print("Error parsing location app data")
+            return None
+
+    def parse_avatar_display_name(self, app_data_base64: str):
+        try:
+            app_data_bytes = base64.b64decode(app_data_base64)
+            return app_data_bytes.decode("utf-8")
+        except:
             return None
 
     # parses lxmf propagation node app data
@@ -2748,6 +2818,7 @@ class Config:
             Config.set(self.key, str(value))
 
     # all possible config items
+    avatar = StringConfig("avatar", None)
     database_version = IntConfig("database_version", None)
     display_name = StringConfig("display_name", "Anonymous Peer")
     auto_announce_enabled = BoolConfig("auto_announce_enabled", False)

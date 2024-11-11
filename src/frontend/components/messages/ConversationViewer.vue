@@ -8,27 +8,39 @@
     <div class="flex p-2 border-b border-gray-300">
 
       <!-- peer info -->
-      <div>
-        <div @click="updateCustomDisplayName" class="flex cursor-pointer">
-          <div v-if="selectedPeer.custom_display_name != null" class="my-auto mr-1" title="Custom Display Name">
+      <div class="flex gap-2">
+        <div class="">
+          <img v-if="selectedPeer.avatar" :src="selectedPeer.avatar" class="w-10 h-10 rounded-full" alt="Avatar"/>
+          <div v-else class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                 stroke="currentColor" class="size-4">
+                 stroke="currentColor" class="size-6">
               <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z"/>
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
             </svg>
           </div>
-          <div class="my-auto font-semibold" :title="selectedPeer.display_name">
-            {{ selectedPeer.custom_display_name ?? selectedPeer.display_name }}
-          </div>
         </div>
-        <div class="text-sm">
-          <{{ selectedPeer.destination_hash }}>
-          <span v-if="selectedPeerPath" @click="onDestinationPathClick(selectedPeerPath)"
-                class="cursor-pointer">{{ selectedPeerPath.hops }} {{ selectedPeerPath.hops === 1 ? 'hop' : 'hops' }} away</span>
-          <span v-if="selectedPeerLxmfStampInfo && selectedPeerLxmfStampInfo.stamp_cost"> • <span
-              @click="onStampInfoClick(selectedPeerLxmfStampInfo)"
-              class="cursor-pointer">Stamp Cost {{ selectedPeerLxmfStampInfo.stamp_cost }}</span></span>
+        <div>
+          <div @click="updateCustomDisplayName" class="flex cursor-pointer">
+            <div v-if="selectedPeer.custom_display_name != null" class="my-auto mr-1" title="Custom Display Name">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                   stroke="currentColor" class="size-4">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z"/>
+              </svg>
+            </div>
+            <div class="my-auto font-semibold" :title="selectedPeer.display_name">
+              {{ selectedPeer.custom_display_name ?? selectedPeer.display_name }}
+            </div>
+          </div>
+          <div class="text-sm">
+            <{{ selectedPeer.destination_hash }}>
+            <span v-if="selectedPeerPath" @click="onDestinationPathClick(selectedPeerPath)"
+                  class="cursor-pointer">{{ selectedPeerPath.hops }} {{ selectedPeerPath.hops === 1 ? 'hop' : 'hops' }} away</span>
+            <span v-if="selectedPeerLxmfStampInfo && selectedPeerLxmfStampInfo.stamp_cost"> • <span
+                @click="onStampInfoClick(selectedPeerLxmfStampInfo)"
+                class="cursor-pointer">Stamp Cost {{ selectedPeerLxmfStampInfo.stamp_cost }}</span></span>
+          </div>
         </div>
       </div>
 
@@ -485,13 +497,13 @@
 
             <!-- send message -->
             <div class="ml-auto my-auto">
-                <SendMessageButton
-                    @send="sendMessage"
-                    @delivery-method-changed="this.newMessageDeliveryMethod = $event"
-                    :is-sending-message="isSendingMessage"
-                    :can-send-message="canSendMessage"
-                    :delivery-method="newMessageDeliveryMethod"/>
-            </div> 
+              <SendMessageButton
+                  @send="sendMessage"
+                  @delivery-method-changed="this.newMessageDeliveryMethod = $event"
+                  :is-sending-message="isSendingMessage"
+                  :can-send-message="canSendMessage"
+                  :delivery-method="newMessageDeliveryMethod"/>
+            </div>
 
           </div>
 

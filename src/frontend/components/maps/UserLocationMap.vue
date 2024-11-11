@@ -200,12 +200,6 @@ export default {
           }
 
           L.marker(this.center).bindPopup("You are here").addTo(this.map);
-          L.circle(this.center, {
-            color: COLOR,
-            fillColor: FILL_COLOR,
-            fillOpacity: OPACITY,
-            radius: RADIUS,
-          }).addTo(this.map);
 
           this.zoom = this.getZoomOption();
           this.map.setView(this.center, this.zoom);

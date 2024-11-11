@@ -2,6 +2,41 @@
   <div class="flex flex-col flex-1 overflow-hidden min-w-full sm:min-w-[500px]">
     <div class="overflow-y-auto space-y-2 p-2">
 
+      <!-- avatar -->
+      <div class="bg-white rounded shadow">
+        <div class="flex border-b border-gray-300 text-gray-700 p-2 font-semibold">Avatar</div>
+        <div class="divide-y text-gray-900">
+
+          <div class="p-2">
+            <div class="text-sm text-gray-700">
+              <ul class="list-disc list-inside">
+                <li>Choose an avatar to represent you in the app.</li>
+                <li>Avatars are stored on the RLink server and are publicly accessible.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="p-2">
+            <div class="flex items-start">
+              <div class="flex items-center h-5">
+                <img v-if="config.avatar" :src="`data:image/webp;base64,${config.avatar}`"
+                     class="w-10 h-10 rounded-full" alt="Avatar">
+                <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="size-10">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                </svg>
+              </div>
+              <div class="ml-2">
+                <label for="avatar" class="text-sm font-medium text-gray-900">Change Avatar</label>
+                <input id="avatar" type="file" @change="onAvatarChange" class="text-sm text-gray-900">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- interfaces -->
       <div class="bg-white rounded shadow">
         <div class="flex border-b border-gray-300 text-gray-700 p-2 font-semibold">Interfaces</div>
@@ -191,12 +226,14 @@
 <script>
 import Utils from "../../js/Utils";
 import WebSocketConnection from "../../js/WebSocketConnection";
+import pako from "pako";
 
 export default {
   name: 'SettingsPage',
   data() {
     return {
       config: {
+        avatar: null,
         auto_resend_failed_messages_when_announce_received: null,
         allow_auto_resending_failed_messages_with_attachments: null,
         auto_send_failed_messages_to_propagation_node: null,
@@ -287,6 +324,38 @@ export default {
     async onTelemetryEnabledChange() {
       await this.updateConfig({
         "telemetry_enabled": this.config.telemetry_enabled,
+      });
+    },
+    async onAvatarChange(event) {
+      if (!event.target.files[0]) {
+        return;
+      }
+      // max 2 Kb
+      if (event.target.files[0].size > 1024 * 2) {
+        alert("Avatar must be less than 10 Kb!");
+        return;
+      }
+
+      try {
+        await this.convertToBase64(event.target.files[0]);
+        console.log(this.config.avatar);
+        await this.updateConfig({
+          "avatar": this.config.avatar,
+        });
+      } catch (e) {
+        alert("Failed to save avatar!");
+        console.log(e);
+      }
+    },
+    async convertToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          this.config.avatar = reader.result.split(",")[1];
+          resolve();
+        };
+        reader.onerror = error => reject(error);
       });
     },
     formatSecondsAgo: function (seconds) {
