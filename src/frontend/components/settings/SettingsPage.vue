@@ -33,7 +33,7 @@
               </div>
               <!-- Delete avatar if set -->
               <div v-if="config.avatar" class="ml-auto">
-                <button @click="onAvatarChange" type="button"
+                <button @click="deleteAvatar" type="button"
                         class="inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
                   Delete
                 </button>
@@ -333,13 +333,18 @@ export default {
         "telemetry_enabled": this.config.telemetry_enabled,
       });
     },
+    async deleteAvatar() {
+      await this.updateConfig({
+        "avatar": null,
+      });
+    },
     async onAvatarChange(event) {
       if (!event.target.files[0]) {
         return;
       }
       // max 2 Kb
       if (event.target.files[0].size > 1024 * 2) {
-        alert("Avatar must be less than 10 Kb!");
+        alert(`Avatar must be less than ${1024 * 2} Kb!`);
         return;
       }
 

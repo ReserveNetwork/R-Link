@@ -1553,7 +1553,24 @@ class RLink:
 
         # update avatar
         if "avatar" in data:
-            self.config.avatar.set(data["avatar"])
+
+            # check if avatar is a valid base64 image
+            try:
+                if data["avatar"] is None:
+                    self.config.avatar.set(None)
+                    return
+
+                # check if avatar size is within limits the max size is 2kb
+                avatar_img = base64.b64decode(data["avatar"])
+
+                if avatar_img is not None and sys.getsizeof(avatar_img) > 2048:
+                    print("avatar is too large")
+                    return
+
+                self.config.avatar.set(data["avatar"])
+            except:
+                print("invalid base64 image")
+                return
 
         # update display name in config
         if "display_name" in data and data["display_name"] != "":
@@ -1915,8 +1932,12 @@ class RLink:
                 }
 
             if field_type == LXMF.FIELD_CUSTOM_DATA:
+                avatar_bytes = None
+                if value[0] is not None:
+                    avatar_bytes = bytes.decode(value[0], "utf-8")
+
                 fields["avatar"] = {
-                    "avatar": bytes.decode(value[0], "utf-8"),
+                    "avatar": avatar_bytes,
                 }
 
         # convert 0.0-1.0 progress to 0.00-100 percentage
@@ -2086,9 +2107,12 @@ class RLink:
 
             avatar = None
             if "avatar" in fields and lxmf_message.incoming:
-                print("avatar found in fields")
                 avatar = fields["avatar"]["avatar"]
-                self.db_upsert_avatar(db_lxmf_message.source_hash, db_lxmf_message.destination_hash, avatar, True)
+                if avatar is None:
+                    database.Avatar.delete().where((database.Avatar.source_hash == db_lxmf_message.source_hash) & (
+                            database.Avatar.destination_hash == db_lxmf_message.destination_hash)).execute()
+                else:
+                    self.db_upsert_avatar(db_lxmf_message.source_hash, db_lxmf_message.destination_hash, avatar, True)
 
             asyncio.run(self.websocket_broadcast(json.dumps({
                 "type": "lxmf.delivery",
@@ -2305,10 +2329,20 @@ class RLink:
                   .order_by(database.Avatar.updated_at.desc())
                   .first())
 
+        config = (database.Config.select()
+                  .where(database.Config.key == "avatar")
+                  .first())
+
         # send avatar if not send before
-        if avatar is None and self.config.avatar.get():
+        if (avatar is None and self.config.avatar.get()) or (
+                config is not None and avatar is not None and avatar.updated_at < config.updated_at):
             lxmf_message.fields[LXMF.FIELD_CUSTOM_DATA] = [
                 self.config.avatar.get().encode("utf-8"),
+            ]
+
+        if config is None and avatar is not None:
+            lxmf_message.fields[LXMF.FIELD_CUSTOM_DATA] = [
+                None,
             ]
 
         # add file attachments field
@@ -2398,10 +2432,6 @@ class RLink:
             fields = message_dict["fields"]
             if "avatar" in fields and (has_delivered or has_propagated):
                 self.db_upsert_avatar(lxmf_message.source_hash.hex(), lxmf_message.destination_hash.hex(), None, False)
-
-            # if has_delivered or has_propagated:
-            #     if "avatar" in fields:
-            #         self.db_upsert_avatar(lxmf_message.source_hash.hex(), lxmf_message.destination_hash.hex(), None, False)
 
     # handle an announce received from reticulum, for an audio call address
     # NOTE: cant be async, as Reticulum doesn't await it
@@ -2616,10 +2646,6 @@ class RLink:
     # currently, this will use the app data from the most recent announce
     def get_lxmf_conversation_avatar(self, source_hash):
         try:
-            avatars = database.Avatar.select()
-            # for a in avatars:
-            #     print(a)
-            # get profile.avatar announce from database for the provided destination hash
             avatar = (database.Avatar.select()
                       .where(database.Avatar.source_hash == source_hash)
                       .where(database.Avatar.avatar is not None)
