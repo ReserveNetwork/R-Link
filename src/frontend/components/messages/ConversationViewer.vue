@@ -10,7 +10,9 @@
       <!-- peer info -->
       <div class="flex gap-2">
         <div class="">
-          <img v-if="selectedPeer.avatar" :src="`data:image/webp;base64,${selectedPeer.avatar}`" class="w-10 h-10 rounded-full" alt="Avatar"/>
+          <img v-if="selectedPeer.avatar" :src="`data:image/webp;base64,${selectedPeer.avatar}`"
+               class="w-10 h-10 rounded-full cursor-pointer" alt="Avatar"
+               @click="openImageModal"/>
           <div v-else class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                  stroke="currentColor" class="size-6">
@@ -512,6 +514,12 @@
       </div>
     </div>
 
+    <!-- profile picture viewer modal -->
+    <ProfilePictureModal
+        v-model="isProfilePictureViewerOpen"
+        :peer="selectedPeer"
+    />
+
     <!-- hidden file input for selecting files -->
     <input ref="image-input" @change="onImageInputChange" type="file" accept="image/*" style="display:none"/>
     <input ref="file-input" @change="onFileInputChange" type="file" multiple style="display:none"/>
@@ -545,6 +553,7 @@ import SendMessageButton from "./SendMessageButton.vue";
 import AddVideoButton from "./AddVideoButton.vue";
 import TextAsciiPanel from "./TextAsciiPanel.vue";
 import PlayVideoButton from "./PlayVideoButton.vue";
+import ProfilePictureModal from "../ui/ProfilePictureModal.vue";
 
 export default {
   name: 'ConversationViewer',
@@ -554,6 +563,7 @@ export default {
     TextAsciiPanel,
     AddVideoButton,
     AddAudioButton,
+    ProfilePictureModal
   },
   props: {
     myLxmfAddressHash: String,
@@ -571,6 +581,8 @@ export default {
 
       isLoadingPrevious: false,
       hasMorePrevious: true,
+
+      isProfilePictureViewerOpen: false,
 
       newMessageDeliveryMethod: null,
       newMessageText: "",
@@ -621,6 +633,9 @@ export default {
 
   },
   methods: {
+    openImageModal() {
+      this.isProfilePictureViewerOpen = true;
+    },
     getVideoBlob(frames) {
       return new Blob([frames])
     },
