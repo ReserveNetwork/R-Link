@@ -2086,6 +2086,7 @@ class RLink:
 
             avatar = None
             if "avatar" in fields and lxmf_message.incoming:
+                print("avatar found in fields")
                 avatar = fields["avatar"]["avatar"]
                 self.db_upsert_avatar(db_lxmf_message.source_hash, db_lxmf_message.destination_hash, avatar, True)
 
@@ -2378,10 +2379,11 @@ class RLink:
             # upsert lxmf message to database (as we want to update the progress in database too)
             self.db_upsert_lxmf_message(lxmf_message)
 
+            message_dict = self.convert_lxmf_message_to_dict(lxmf_message)
             # send update to websocket clients
             await self.websocket_broadcast(json.dumps({
                 "type": "lxmf_message_state_updated",
-                "lxmf_message": self.convert_lxmf_message_to_dict(lxmf_message),
+                "lxmf_message": message_dict,
             }))
 
             # check message state
@@ -2393,8 +2395,13 @@ class RLink:
             if has_delivered or has_propagated or has_failed:
                 should_update_message = False
 
-            if has_delivered or has_propagated:
+            fields = message_dict["fields"]
+            if "avatar" in fields and (has_delivered or has_propagated):
                 self.db_upsert_avatar(lxmf_message.source_hash.hex(), lxmf_message.destination_hash.hex(), None, False)
+
+            # if has_delivered or has_propagated:
+            #     if "avatar" in fields:
+            #         self.db_upsert_avatar(lxmf_message.source_hash.hex(), lxmf_message.destination_hash.hex(), None, False)
 
     # handle an announce received from reticulum, for an audio call address
     # NOTE: cant be async, as Reticulum doesn't await it
