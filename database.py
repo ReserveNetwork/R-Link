@@ -70,7 +70,8 @@ class Announce(BaseModel):
 
 class Avatar(BaseModel):
     id = BigAutoField()
-    destination_hash = CharField(unique=True)  # unique destination hash
+    source_hash = CharField()
+    destination_hash = CharField()
     avatar = TextField(null=True)  # base64 encoded nullable avatar bytes
     is_incoming = BooleanField(default=False)  # if true, we should ignore avatar, it's set to None by default on incoming messages
 

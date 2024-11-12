@@ -2085,9 +2085,9 @@ class RLink:
             fields = json.loads(db_lxmf_message.fields)
 
             avatar = None
-            if "avatar" in fields:
+            if "avatar" in fields and lxmf_message.incoming:
                 avatar = fields["avatar"]["avatar"]
-                self.db_upsert_avatar(db_lxmf_message.source_hash, avatar, True)
+                self.db_upsert_avatar(db_lxmf_message.source_hash, db_lxmf_message.destination_hash, avatar, True)
 
             asyncio.run(self.websocket_broadcast(json.dumps({
                 "type": "lxmf.delivery",
@@ -2169,10 +2169,11 @@ class RLink:
         query = query.on_conflict(conflict_target=[database.LxmfMessage.hash], update=data)
         query.execute()
 
-    def db_upsert_avatar(self, destination_hash: str, avatar_bytes: str | None, is_incoming: bool):
+    def db_upsert_avatar(self, source_hash: str, destination_hash: str, avatar_bytes: str | None, is_incoming: bool):
 
         # prepare data to insert or update
         data = {
+            "source_hash": source_hash,
             "destination_hash": destination_hash,
             "avatar": avatar_bytes,
             "is_incoming": is_incoming,
@@ -2181,7 +2182,6 @@ class RLink:
 
         # upsert to database
         query = database.Avatar.insert(data)
-        query = query.on_conflict(conflict_target=[database.Avatar.destination_hash], update=data)
         query.execute()
 
     # upserts the provided announce to the database
@@ -2299,7 +2299,10 @@ class RLink:
 
         lxmf_message.fields = {}
 
-        avatar = database.Avatar.get_or_none(database.Avatar.destination_hash == destination_hash.hex())
+        avatar = (database.Avatar.select()
+                  .where(database.Avatar.destination_hash == destination_hash.hex())
+                  .order_by(database.Avatar.updated_at.desc())
+                  .first())
 
         # send avatar if not send before
         if avatar is None and self.config.avatar.get():
@@ -2390,8 +2393,8 @@ class RLink:
             if has_delivered or has_propagated or has_failed:
                 should_update_message = False
 
-            if has_delivered:
-                self.db_upsert_avatar(lxmf_message.destination_hash.hex(), None, False)
+            if has_delivered or has_propagated:
+                self.db_upsert_avatar(lxmf_message.source_hash.hex(), lxmf_message.destination_hash.hex(), None, False)
 
     # handle an announce received from reticulum, for an audio call address
     # NOTE: cant be async, as Reticulum doesn't await it
@@ -2613,6 +2616,7 @@ class RLink:
             avatar = (database.Avatar.select()
                       .where(database.Avatar.destination_hash == destination_hash)
                       .where(database.Avatar.avatar is not None)
+                      .order_by(database.Avatar.updated_at.desc())
                       .first())
 
             if avatar is not None and avatar.avatar is not None:
