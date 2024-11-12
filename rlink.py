@@ -2614,14 +2614,14 @@ class RLink:
 
     # get avatar to show for an lxmf conversation
     # currently, this will use the app data from the most recent announce
-    def get_lxmf_conversation_avatar(self, destination_hash):
+    def get_lxmf_conversation_avatar(self, source_hash):
         try:
             avatars = database.Avatar.select()
             # for a in avatars:
             #     print(a)
             # get profile.avatar announce from database for the provided destination hash
             avatar = (database.Avatar.select()
-                      .where(database.Avatar.destination_hash == destination_hash)
+                      .where(database.Avatar.source_hash == source_hash)
                       .where(database.Avatar.avatar is not None)
                       .order_by(database.Avatar.updated_at.desc())
                       .first())
