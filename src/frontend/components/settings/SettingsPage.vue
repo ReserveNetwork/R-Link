@@ -2,6 +2,73 @@
   <div class="flex flex-col flex-1 overflow-hidden min-w-full sm:min-w-[500px]">
     <div class="overflow-y-auto space-y-2 p-2">
 
+      <!-- my identity -->
+      <div class="bg-white rounded shadow">
+        <div class="flex border-b border-gray-300 text-gray-700 p-2 font-semibold">
+          <div class="my-auto mr-auto">My Identity</div>
+          <div class="my-auto">
+            <button class="my-auto inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500" @click.stop="onIdentityChange()" type="button">
+              Save Identity
+            </button>
+          </div>
+        </div>
+        <div class="divide-y text-gray-900">
+          <div class="p-2">
+            <div class="text-sm text-gray-700">
+              <label for="display-name" class="text-sm font-medium text-gray-900">Display Name</label>
+              <input v-model="config.display_name" type="text" placeholder="Display Name"
+                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"> 
+            </div>
+          </div>
+
+          <!-- show identity hash and lxmf address -->
+          <div class="p-2">
+            <div class="text-sm text-gray-700">
+              <div class="font-medium text-gray-900">Identity Hash</div>
+              <div>{{ config.identity_hash }}</div>
+            </div>
+          </div>
+
+          <div class="p-2">
+            <div class="text-sm text-gray-700">
+              <div class="font-medium text-gray-900">LXMF Address</div>
+              <div>{{ config.lxmf_address_hash }}</div>
+            </div>
+          </div>
+          <!-- end identity hash -->
+        </div>
+      </div>
+
+      <!-- announce -->
+      <div class="bg-white rounded shadow">
+        <div class="flex border-b border-gray-300 text-gray-700 p-2 font-semibold">Announce</div>
+        <div class="divide-y text-gray-900">
+          <div class="p-2">
+            <label for="announce-interval" class="text-sm font-medium text-gray-900">
+              Announce Interval Seconds
+            </label>
+            <select v-model="config.auto_announce_interval_seconds" @change="onAnnounceIntervalSecondsChange"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+              <option value="0">Disabled</option>
+              <option value="900">Every 15 Minutes</option>
+              <option value="1800">Every 30 Minutes</option>
+              <option value="3600">Every 1 Hour</option>
+              <option value="10800">Every 3 Hours</option>
+              <option value="21600">Every 6 Hours</option>
+              <option value="43200">Every 12 Hours</option>
+              <option value="86400">Every 24 Hours</option>
+            </select>
+            <div class="text-sm text-gray-700">
+              <span v-if="config.last_announced_at">
+                Last announced: {{ formatSecondsAgo(config.last_announced_at) }}
+              </span>
+              <span v-else>Last announced: Never</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- announce end -->
+
       <!-- avatar -->
       <div class="bg-white rounded shadow">
         <div class="flex border-b border-gray-300 text-gray-700 p-2 font-semibold">Avatar</div>
@@ -226,6 +293,35 @@
         </div>
       </div>
 
+      <!-- Location -->
+      <div class="bg-white rounded shadow">
+        <div class="flex border-b border-gray-300 text-gray-700 p-2 font-semibold">
+          <div class="my-auto mr-auto">Location</div>
+          <div class="my-auto">
+              <button @click.stop="getCurrentLocation" type="button" v-if="latitude === '' || longitude === ''"
+              class="my-auto inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
+              Get Location
+            </button>
+            <button @click.stop="onLocationChange" type="button" v-else
+              class="my-auto inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
+              Save Location
+            </button>
+          </div>
+        </div>
+        <div class="divide-y text-gray-900">
+          <div class="p-2">
+            <label for="latitude" class="text-sm font-medium text-gray-900">Latitude</label>
+            <input v-model="latitude" type="text" placeholder="Latitude"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+          </div>
+          <div class="p-2">
+            <label for="longitude" class="text-sm font-medium text-gray-900">Longitude</label>
+            <input v-model="longitude" type="text" placeholder="Longitude"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+          </div>
+        </div>
+      </div>
+      <!-- Location end -->
     </div>
   </div>
 </template>
@@ -241,14 +337,21 @@ export default {
     return {
       config: {
         avatar: null,
+        auto_announce_interval_seconds: null,
         auto_resend_failed_messages_when_announce_received: null,
         allow_auto_resending_failed_messages_with_attachments: null,
         auto_send_failed_messages_to_propagation_node: null,
+        display_name: null,
         show_suggested_community_interfaces: null,
+        identity_hash: null,
+        lxmf_address_hash: null,
         lxmf_local_propagation_node_enabled: null,
         lxmf_preferred_propagation_node_destination_hash: null,
         telemetry_enabled: null,
+        location: null,
       },
+      latitude: '',
+      longitude: ''
     };
   },
   beforeUnmount() {
@@ -279,6 +382,7 @@ export default {
       try {
         const response = await window.axios.get("/api/v1/config");
         this.config = response.data.config;
+        this.setLatLng();
       } catch (e) {
         // do nothing if failed to load config
         console.log(e);
@@ -288,10 +392,16 @@ export default {
       try {
         const response = await window.axios.patch("/api/v1/config", config);
         this.config = response.data.config;
+        this.setLatLng();
       } catch (e) {
         alert("Failed to save config!");
         console.log(e);
       }
+    },
+    async onAnnounceIntervalSecondsChange() {
+      await this.updateConfig({
+        "auto_announce_interval_seconds": this.config.auto_announce_interval_seconds,
+      });
     },
     async onAutoResendFailedMessagesWhenAnnounceReceivedChange() {
       await this.updateConfig({
@@ -326,6 +436,23 @@ export default {
     async onLxmfPreferredPropagationNodeAutoSyncIntervalSecondsChange() {
       await this.updateConfig({
         "lxmf_preferred_propagation_node_auto_sync_interval_seconds": this.config.lxmf_preferred_propagation_node_auto_sync_interval_seconds,
+      });
+    },
+    async onIdentitySettingsChange() {
+      await this.updateConfig({
+        "display_name": this.config.display_name,
+      });
+    },
+    async onLocationChange() {
+      // check location 
+      if (!this.isValidCoordinates(this.latitude, this.longitude)) {
+        alert("Please! check the coordinates. It's not valid!");
+        return;
+      }
+
+      this.config.location = `${this.latitude}, ${this.longitude}`;
+      await this.updateConfig({
+        "location": this.config.location
       });
     },
     async onTelemetryEnabledChange() {
@@ -373,6 +500,64 @@ export default {
     formatSecondsAgo: function (seconds) {
       return Utils.formatSecondsAgo(seconds);
     },
+    setLatLng() {
+      if (this.config.location) {
+        const locArr = this.config.location.split(",");
+        if (locArr.length < 2) return;
+
+        this.latitude = locArr[0];
+        this.longitude = locArr[1];
+      }
+    },
+    /**
+    * Validates latitude and longitude coordinates, allowing null values
+    * @param {number|null} latitude - Latitude coordinate (-90 to 90)
+    * @param {number|null} longitude - Longitude coordinate (-180 to 180)
+    * @returns {boolean} - True if coordinates are valid or null, false otherwise
+    */
+    isValidCoordinates(latitude, longitude) {
+    // Check if both values are null
+      if (latitude === null && longitude === null) {
+        return true;
+      }
+
+      // Check if only one value is null (invalid state)
+      if ((latitude === null && longitude !== null) || 
+        (latitude !== null && longitude === null)) {
+        return false;
+      }
+
+      // Check if values are numbers
+      if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+        return false;
+      }
+
+      // Check if values are finite (not NaN, Infinity, or -Infinity)
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        return false;
+      }
+
+      // Validate latitude range (-90 to 90)
+      if (latitude < -90 || latitude > 90) {
+        return false;
+      }
+
+      // Validate longitude range (-180 to 180)
+      if (longitude < -180 || longitude > 180) {
+        return false;
+      }
+      return true;
+    },
+    getCurrentLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          this.latitude = position.coords.latitude;
+          this.longitude = position.coords.longitude;
+        });
+      } else {
+        DialogUtils.alert("Geolocation is not supported by this browser.");
+      }
+    }
   },
 }
 </script>

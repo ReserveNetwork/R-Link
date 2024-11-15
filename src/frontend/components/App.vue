@@ -10,6 +10,18 @@
           </div>
         </div>
         <div class="flex my-auto ml-auto mr-0 sm:mr-2 space-x-1 sm:space-x-2">
+          <button @click.stop="sendAnnounce" type="button" class="rounded-full">
+            <span class="flex text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-full">
+              <span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                       stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9.348 14.652a3.75 3.75 0 0 1 0-5.304m5.304 0a3.75 3.75 0 0 1 0 5.304m-7.425 2.121a6.75 6.75 0 0 1 0-9.546m9.546 0a6.75 6.75 0 0 1 0 9.546M5.106 18.894c-3.808-3.807-3.808-9.98 0-13.788m13.788 0c3.808 3.807 3.808 9.98 0 13.788M12 12h.008v.008H12V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
+                  </svg>
+              </span>
+              <span class="hidden sm:inline-block my-auto mx-1 text-sm">Announce Now</span>
+            </span>
+          </button>
           <button @click="syncPropagationNode" type="button" class="rounded-full">
                         <span class="flex text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-full">
                             <span :class="{ 'animate-spin': isSyncingPropagationNode }">
@@ -136,214 +148,8 @@
                 </SidebarLink>
               </li>
 
-              <!-- info -->
-              <li>
-                <SidebarLink :to="{ name: 'about' }">
-                  <template v-slot:icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                         stroke="currentColor" class="size-6">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                            d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/>
-                    </svg>
-                  </template>
-                  <template v-slot:text>About</template>
-                </SidebarLink>
-              </li>
-
             </ul>
           </div>
-
-          <div>
-
-            <!-- my identity -->
-            <div v-if="config" class="bg-white border-t">
-              <div @click="isShowingMyIdentitySection = !isShowingMyIdentitySection"
-                   class="flex text-gray-700 p-2 cursor-pointer">
-                <div class="my-auto mr-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                       stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                  </svg>
-                </div>
-                <div class="my-auto">My Identity</div>
-                <div class="ml-auto">
-                  <button @click.stop="saveIdentitySettings" type="button"
-                          class="my-auto inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
-                    Save
-                  </button>
-                </div>
-              </div>
-              <div v-if="isShowingMyIdentitySection" class="divide-y text-gray-900 border-t border-gray-300">
-                <div class="p-1">
-                  <input v-model="displayName" type="text" placeholder="Display Name"
-                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                </div>
-                <div class="p-1">
-                  <div>Identity Hash</div>
-                  <div class="text-sm text-gray-700">{{ config.identity_hash }}</div>
-                </div>
-                <div class="p-1">
-                  <div>LXMF Address</div>
-                  <div class="text-sm text-gray-700">{{ config.lxmf_address_hash }}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- auto announce -->
-            <div v-if="config" class="bg-white border-t">
-              <div @click="isShowingAnnounceSection = !isShowingAnnounceSection"
-                   class="flex text-gray-700 p-2 cursor-pointer">
-                <div class="my-auto mr-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                       stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M9.348 14.652a3.75 3.75 0 0 1 0-5.304m5.304 0a3.75 3.75 0 0 1 0 5.304m-7.425 2.121a6.75 6.75 0 0 1 0-9.546m9.546 0a6.75 6.75 0 0 1 0 9.546M5.106 18.894c-3.808-3.807-3.808-9.98 0-13.788m13.788 0c3.808 3.807 3.808 9.98 0 13.788M12 12h.008v.008H12V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
-                  </svg>
-                </div>
-                <div class="my-auto">Announce</div>
-                <div class="ml-auto">
-                  <button @click.stop="sendAnnounce" type="button"
-                          class="my-auto inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
-                    Announce Now
-                  </button>
-                </div>
-              </div>
-              <div v-if="isShowingAnnounceSection" class="divide-y text-gray-900 border-t border-gray-300">
-                <div class="p-1">
-                  <select v-model="config.auto_announce_interval_seconds" @change="onAnnounceIntervalSecondsChange"
-                          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                    <option value="0">Disabled</option>
-                    <option value="900">Every 15 Minutes</option>
-                    <option value="1800">Every 30 Minutes</option>
-                    <option value="3600">Every 1 Hour</option>
-                    <option value="10800">Every 3 Hours</option>
-                    <option value="21600">Every 6 Hours</option>
-                    <option value="43200">Every 12 Hours</option>
-                    <option value="86400">Every 24 Hours</option>
-                  </select>
-                  <div class="text-sm text-gray-700">
-                    <span v-if="config.last_announced_at">Last announced: {{
-                        formatSecondsAgo(config.last_announced_at)
-                      }}</span>
-                    <span v-else>Last announced: Never</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- location -->
-            <div v-if="config" class="bg-white border-t">
-              <div @click="isShowingLocationSection = !isShowingLocationSection"
-                   class="flex text-gray-700 p-2 cursor-pointer">
-                <div class="my-auto mr-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                       stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/>
-                  </svg>
-                </div>
-                <div class="my-auto">Location</div>
-                <div class="ml-auto">
-                  <button @click.stop="getCurrentLocation" type="button" v-if="latitude === '' || longitude === ''"
-                          class="my-auto inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
-                    Get Location
-                  </button>
-                  <button @click.stop="saveLocationSettings" type="button" v-else
-                          class="my-auto inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
-                    Save
-                  </button>
-                </div>
-              </div>
-              <div v-if="isShowingLocationSection" class="divide-y text-gray-900 border-t border-gray-300">
-                <div class="p-1">
-                  <input v-model="latitude" type="text" placeholder="Latitude"
-                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                </div>
-                <div class="p-1">
-                  <input v-model="longitude" type="text" placeholder="Longitude"
-                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                </div>
-              </div>
-            </div>
-
-            <!-- audio calls -->
-            <div v-if="config" class="bg-white border-t">
-              <div @click="isShowingCallsSection = !isShowingCallsSection"
-                   class="flex text-gray-700 p-2 cursor-pointer">
-                <div class="my-auto mr-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                       stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"/>
-                  </svg>
-                </div>
-                <div class="my-auto">Calls</div>
-                <div class="ml-auto">
-                  <a @click.stop href="../call.html" target="_blank"
-                     class="my-auto inline-flex items-center gap-x-1 rounded-md bg-gray-500 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500">
-                    <span>Open Phone</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-                      <path fill-rule="evenodd"
-                            d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z"
-                            clip-rule="evenodd"/>
-                      <path fill-rule="evenodd"
-                            d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z"
-                            clip-rule="evenodd"/>
-                    </svg>
-                  </a>
-                </div>
-              </div>
-              <div v-if="isShowingCallsSection" class="divide-y text-gray-900 border-t border-gray-300">
-                <div class="p-1 flex">
-                  <div>
-                    <div>Status</div>
-                    <div class="text-sm text-gray-700">
-                      <div v-if="activeAudioCalls.length > 0" class="flex space-x-2">
-                        <span v-if="activeInboundAudioCalls.length > 0">{{
-                            activeInboundAudioCalls.length
-                          }} Incoming {{ activeInboundAudioCalls.length === 1 ? 'Call' : 'Calls' }}</span>
-                        <span v-else>{{
-                            activeOutboundAudioCalls.length
-                          }} Outgoing {{ activeOutboundAudioCalls.length === 1 ? 'Call' : 'Calls' }}</span>
-                      </div>
-                      <div v-else>Hung up, waiting for call...</div>
-                    </div>
-                  </div>
-                  <div v-if="activeAudioCalls.length > 0" class="ml-auto my-auto mr-1 space-x-2">
-
-                    <!-- view incoming calls -->
-                    <a href="../call.html" target="_blank" title="View Incoming Calls"
-                       class="my-auto inline-flex items-center gap-x-1 rounded-full bg-green-500 p-2 text-sm font-semibold text-white shadow-sm hover:bg-green-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-500">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                        <path fill-rule="evenodd"
-                              d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z"
-                              clip-rule="evenodd"/>
-                        <path fill-rule="evenodd"
-                              d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z"
-                              clip-rule="evenodd"/>
-                      </svg>
-                    </a>
-
-                    <!-- hangup all calls -->
-                    <button title="Hangup all Calls" @click="hangupAllCalls" type="button"
-                            class="my-auto inline-flex items-center gap-x-1 rounded-full bg-red-500 p-2 text-sm font-semibold text-white shadow-sm hover:bg-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                           class="w-5 h-5 rotate-[135deg] translate-y-0.5">
-                        <path fill-rule="evenodd"
-                              d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 15.352V16.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z"
-                              clip-rule="evenodd"/>
-                      </svg>
-                    </button>
-
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
         </div>
       </div>
 
@@ -385,8 +191,6 @@ export default {
       audioCalls: [],
       propagationNodeStatus: null,
 
-      latitude: '',
-      longitude: '',
     };
   },
   beforeUnmount() {
@@ -419,10 +223,6 @@ export default {
         case 'config': {
           this.config = json.config;
           this.displayName = json.config.display_name;
-          if (json.config.location) {
-            this.latitude = json.config.location.split(",")[0];
-            this.longitude = json.config.location.split(",")[1];
-          }
           break;
         }
         case 'announced': {
@@ -476,21 +276,6 @@ export default {
       } catch (e) {
         console.error(e);
       }
-    },
-    async saveIdentitySettings() {
-      await this.updateConfig({
-        "display_name": this.displayName,
-      });
-    },
-    async saveLocationSettings() {
-      await this.updateConfig({
-        "location": this.latitude + "," + this.longitude,
-      });
-    },
-    async onAnnounceIntervalSecondsChange() {
-      await this.updateConfig({
-        "auto_announce_interval_seconds": this.config.auto_announce_interval_seconds,
-      });
     },
     async composeNewMessage() {
 
@@ -605,22 +390,13 @@ export default {
     },
     onAppNameClick() {
       // user may be on mobile, and is unable to scroll back to sidebar, so let them tap app name to do it
+      this.$router.push({ name: 'about' });
       this.$refs["middle"].scrollTo({
         top: 0,
         left: 0,
         behavior: "smooth",
       });
     },
-    getCurrentLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-          this.latitude = position.coords.latitude;
-          this.longitude = position.coords.longitude;
-        });
-      } else {
-        DialogUtils.alert("Geolocation is not supported by this browser.");
-      }
-    }
   },
   computed: {
     unreadConversationsCount() {
