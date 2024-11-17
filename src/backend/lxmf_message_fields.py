@@ -8,6 +8,11 @@ class LxmfAudioField:
         self.audio_mode = audio_mode
         self.audio_bytes = audio_bytes
 
+class LxmfHighBandVideoField:
+
+    def __init__(self, video_bytes: bytes):
+        self.video_bytes = video_bytes
+
 class LxmfVideoField:
 
     def __init__(self, audio_bytes: bytes, video_bytes: bytes):

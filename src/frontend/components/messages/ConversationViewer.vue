@@ -158,6 +158,14 @@
 
               </div>
 
+              <!-- high band video field -->
+              <div v-if="chatItem.lxmf_message.fields?.high_band_video" class="pb-1">
+                 <!-- audio is loaded -->
+                <video v-if="lxmfMessageHighBandVideoAttachmentCache[chatItem.lxmf_message.hash]" controls
+                       class="shadow rounded-full">
+                  <source :src="lxmfMessageHighBandVideoAttachmentCache[chatItem.lxmf_message.hash]" type="video/webm"/>
+                </video>
+              </div>
               <!-- video field -->
               <div v-if="chatItem.lxmf_message.fields?.video" class="pb-1">
 
@@ -387,6 +395,35 @@
             </div>
           </div>
 
+          <!-- high band video attachment -->
+          <div v-if="newHighBandMessageVideo" class="mb-2">
+            <div class="flex flex-wrap gap-1">
+              <div class="flex border border-gray-300 rounded text-gray-700 divide-x divide-gray-300 overflow-hidden">
+                <div class="flex p-1">
+                  <!-- video preview -->
+                  <div>
+                    <video controls> 
+                      <source :src="newHighBandMessageVideo.video_preview_url" type="video/webm" />
+                    </video>
+                  </div>
+
+                  <!-- encoded file size -->
+                  <div class="my-auto px-1 text-sm text-gray-500">
+                    {{ formatBytes(newHighBandMessageVideo.video_blob.size) }}
+                  </div>
+                </div>
+                <!-- remove high band video attachment -->
+                <div @click="removeHighBandVideoAttachment"
+                     class="flex my-auto text-sm text-gray-500 h-full px-1 hover:bg-gray-200 cursor-pointer">
+                  <svg class="w-5 h-5 my-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                       stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- video attachment -->
           <div v-if="newMessageVideo" class="mb-2">
             <div class="flex flex-wrap gap-1">
@@ -590,6 +627,7 @@ export default {
       newMessageImageUrl: null,
       newMessageAudio: null,
       newMessageVideo: null,
+      newHighBandMessageVideo: null,
       newMessageFiles: [],
       isSendingMessage: false,
       autoScrollOnNewMessage: true,
@@ -601,6 +639,7 @@ export default {
       audioAttachmentRecordingDuration: null,
       audioAttachmentRecordingTimer: null,
       lxmfMessageAudioAttachmentCache: {},
+      lxmfMessageHighBandVideoAttachmentCache: {},
       lxmfMessageVideoAttachmentCache: {},
       lxmfAudioModeToCodec2ModeMap: {
         // https://github.com/markqvist/LXMF/blob/master/LXMF/LXMF.py#L21
@@ -674,15 +713,24 @@ export default {
       // Stop playback if it's running
       this.stopPlayback()
     },
-    async handleRecordingComplete({frames, audio}) {
-      console.log(`Recording complete: ${frames.length} frames captured`)
-      this.recordedFrames = frames
-      this.currentFrame = 0
-      this.newMessageVideo = {
-        audio_blob: new Blob([audio]),
-        video_blob: frames,
-        audio_preview: Utils.arrayBufferToBase64(await new Blob([audio]).arrayBuffer()),
-      };
+    async handleRecordingComplete({ type, frames, audio }) {
+      //console.log(`Recording complete: ${frames.length} frames captured`)
+      if (type === 'LOW_BAND') {
+        this.recordedFrames = frames
+        this.currentFrame = 0
+        this.newMessageVideo = {
+          audio_blob: new Blob([audio]),
+          video_blob: frames,
+          audio_preview: Utils.arrayBufferToBase64(await new Blob([audio]).arrayBuffer()),
+        };
+      } else if (type === 'HIGH_BAND') {
+        console.log(type);
+        this.recordedFrames = frames;
+        this.newHighBandMessageVideo = {
+          video_blob: frames,
+          video_preview_url: URL.createObjectURL(frames)
+        }
+      }
     },
     playRecording() {
       if (this.isPlaying) {
@@ -1146,6 +1194,30 @@ export default {
 
       }
     },
+    async processHighBandVideoForSelectedPeerChatItems() {
+      for (const chatItem of this.selectedPeerChatItems) {
+
+        // skip if no audio
+        if (!chatItem.lxmf_message?.fields?.high_band_video) {
+          continue;
+        }
+
+        // skip if audio already cached
+        if (this.lxmfMessageHighBandVideoAttachmentCache[chatItem.lxmf_message.hash]) {
+          continue;
+        }
+
+        // decode audio to blob url
+        const objectUrl = await this.decodeLxmfHighBandVideoFieldToBlobUrl(chatItem.lxmf_message.fields.high_band_video);
+        if (!objectUrl) {
+          continue;
+        }
+
+        // update audio cache
+        this.lxmfMessageHighBandVideoAttachmentCache[chatItem.lxmf_message.hash] = objectUrl;
+
+      }
+    },
     async processVideoForSelectedPeerChatItems() {
       for (const chatItem of this.selectedPeerChatItems) {
         // skip if no video
@@ -1228,6 +1300,19 @@ export default {
       } catch (e) {
         // failed to decode lxmf audio field
         console.log(e);
+        return null;
+      }
+    },
+    async decodeLxmfHighBandVideoFieldToBlobUrl(videoField) {
+      try {
+        const highBandVideoBytes = videoField.videoBytes;
+
+        const buffer = this.base64ToArrayBuffer(highBandVideoBytes);
+        const blob = new Blob([buffer], { type: 'video/webm' });
+
+        return URL.createObjectURL(blob);
+      } catch (e) {
+        console.error(err);
         return null;
       }
     },
@@ -1333,6 +1418,14 @@ export default {
           };
         }
 
+        var highBandVideoTotalSize = 0;
+        if (this.newHighBandMessageVideo) {
+          highBandVideoTotalSize = this.newHighBandMessageVideo.size;
+          fields["high_band_video"] = {
+            "video_bytes": Utils.arrayBufferToBase64(await this.newHighBandMessageVideo.video_blob.arrayBuffer()),
+          };
+        }
+
         // add video attachment
         var videoTotalSize = 0;
         if (this.newMessageVideo) {
@@ -1345,7 +1438,7 @@ export default {
 
         // calculate estimated message size in bytes
         const contentSize = this.newMessageText.length;
-        const totalMessageSize = contentSize + fileAttachmentsTotalSize + imageTotalSize + audioTotalSize + videoTotalSize;
+        const totalMessageSize = contentSize + fileAttachmentsTotalSize + imageTotalSize + audioTotalSize + highBandVideoTotalSize + videoTotalSize;
 
         // ask user if they still want to send message if it may be rejected by sender
         if (totalMessageSize > 1000 * 900) { // actual limit in LXMF Router is 1mb
@@ -1381,6 +1474,7 @@ export default {
         this.newMessageImage = null;
         this.newMessageImageUrl = null;
         this.newMessageAudio = null;
+        this.newHighBandMessageVideo = null;
         this.newMessageVideo = null;
         this.newMessageFiles = [];
         this.clearImageInput();
@@ -1646,6 +1740,17 @@ export default {
       this.newMessageAudio = null;
 
     },
+    removeHighBandVideoAttachment: function() {
+
+      // ask user to confirm removing video attachment
+      if (!confirm("Are you sure you want to remove this video attachment?")) {
+        return;
+      }
+
+      // remove audio
+      this.newHighBandMessageVideo = null;
+
+    },
     removeFileAttachment: function (file) {
       this.newMessageFiles = this.newMessageFiles.filter((newMessageFile) => {
         return newMessageFile !== file;
@@ -1847,6 +1952,7 @@ export default {
       // chat items for selected peer changed, so lets process any available audio
       await this.processAudioForSelectedPeerChatItems();
       await this.processVideoForSelectedPeerChatItems();
+      await this.processHighBandVideoForSelectedPeerChatItems();
 
     },
   },

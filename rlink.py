@@ -24,7 +24,7 @@ from serial.tools import list_ports
 import database
 from src.backend.announce_handler import AnnounceHandler
 from src.backend.lxmf_message_fields import LxmfImageField, LxmfFileAttachmentsField, LxmfFileAttachment, \
-    LxmfAudioField, LxmfVideoField, LxmfAvatarField
+    LxmfAudioField, LxmfHighBandVideoField, LxmfVideoField, LxmfAvatarField
 from src.backend.audio_call_manager import AudioCall, AudioCallManager
 
 
@@ -1299,6 +1299,11 @@ class RLink:
                 audio_bytes = base64.b64decode(data["lxmf_message"]["fields"]["audio"]["audio_bytes"])
                 audio_field = LxmfAudioField(audio_mode, audio_bytes)
 
+            high_band_video_field = None
+            if "high_band_video" in fields:
+                video_bytes = base64.b64decode(data["lxmf_message"]["fields"]["high_band_video"]["video_bytes"])
+                high_band_video_field = LxmfHighBandVideoField(video_bytes)
+
             # parse video field
             video_field = None
             if "video" in fields:
@@ -1326,6 +1331,7 @@ class RLink:
                     content=content,
                     image_field=image_field,
                     audio_field=audio_field,
+                    high_band_video_field=high_band_video_field,
                     video_field=video_field,
                     file_attachments_field=file_attachments_field,
                     delivery_method=delivery_method
@@ -1922,6 +1928,12 @@ class RLink:
                     "audio_bytes": audio_bytes,
                 }
 
+            if field_type == LXMF.FIELD_CUSTOM_META:
+                video_bytes = base64.b64encode(value[0]).decode("utf-8")
+                fields["high_band_video"] = {
+                    "video_bytes": video_bytes,
+                }
+
             # handle video field
             if field_type == LXMF.FIELD_CUSTOM_TYPE:
                 audio_bytes = base64.b64encode(value[0]).decode("utf-8")
@@ -2265,6 +2277,7 @@ class RLink:
     async def send_message(self, destination_hash: str, content: str,
                            image_field: LxmfImageField = None,
                            audio_field: LxmfAudioField = None,
+                           high_band_video_field: LxmfHighBandVideoField = None,
                            video_field: LxmfVideoField = None,
                            file_attachments_field: LxmfFileAttachmentsField = None,
                            delivery_method: str = None) -> LXMF.LXMessage:
@@ -2369,6 +2382,11 @@ class RLink:
                 audio_field.audio_mode,
                 audio_field.audio_bytes,
             ]
+        
+        if high_band_video_field is not None:
+            lxmf_message.fields[LXMF.FIELD_CUSTOM_META] = [
+                high_band_video_field.video_bytes,
+            ]
 
         if video_field is not None:
             lxmf_message.fields[LXMF.FIELD_CUSTOM_TYPE] = [
@@ -2388,7 +2406,7 @@ class RLink:
 
         # tell all websocket clients that old failed message was deleted so it can remove from ui
         await self.websocket_broadcast(json.dumps({
-            "type": "lxmf_message_created",
+    "type": "lxmf_message_created",
             "lxmf_message": self.convert_lxmf_message_to_dict(lxmf_message),
         }))
 
@@ -2528,6 +2546,10 @@ class RLink:
                     audio_field = LxmfAudioField(fields["audio"]["audio_mode"],
                                                  base64.b64decode(fields["audio"]["audio_bytes"]))
 
+                high_band_video_field = None
+                if "high_band_video" in fields:
+                    high_band_video_field = LxmfHighBandVideoField(base64.b64decode(fields["high_band_video"]["video_bytes"]))
+
                 if "video" in fields:
                     video_field = LxmfVideoField(base64.b64decode(fields["video"]["audio_bytes"],
                                                                   base64.b64decode(fields["video"]["video_bytes"])))
@@ -2543,7 +2565,7 @@ class RLink:
 
                 # don't resend message with attachments if not allowed
                 if not self.config.allow_auto_resending_failed_messages_with_attachments.get():
-                    if image_field is not None or audio_field is not None or file_attachments_field is not None:
+                    if image_field is not None or audio_field is not None or file_attachments_field is not None or high_band_video_field is not None:
                         print("Not resending failed message with attachments, as setting is disabled")
                         continue
 
@@ -2553,6 +2575,7 @@ class RLink:
                     failed_message.content,
                     image_field,
                     audio_field,
+                    high_band_video_field,
                     video_field,
                     file_attachments_field,
                 )
