@@ -161,10 +161,7 @@
               <!-- high band video field -->
               <div v-if="chatItem.lxmf_message.fields?.high_band_video" class="pb-1">
                  <!-- audio is loaded -->
-                <video v-if="lxmfMessageHighBandVideoAttachmentCache[chatItem.lxmf_message.hash]" controls
-                       class="shadow rounded-full">
-                  <source :src="lxmfMessageHighBandVideoAttachmentCache[chatItem.lxmf_message.hash]" type="video/webm"/>
-                </video>
+                <VideoPlayer v-if="lxmfMessageHighBandVideoAttachmentCache[chatItem.lxmf_message.hash]" :options="{ controls: true, sources: [ { src: lxmfMessageHighBandVideoAttachmentCache[chatItem.lxmf_message.hash], type: 'video/webm' } ] }"/>
               </div>
               <!-- video field -->
               <div v-if="chatItem.lxmf_message.fields?.video" class="pb-1">
@@ -591,6 +588,7 @@ import AddVideoButton from "./AddVideoButton.vue";
 import TextAsciiPanel from "./TextAsciiPanel.vue";
 import PlayVideoButton from "./PlayVideoButton.vue";
 import ProfilePictureModal from "../ui/ProfilePictureModal.vue";
+import VideoPlayer from './VideoPlayer.vue';
 
 export default {
   name: 'ConversationViewer',
@@ -600,7 +598,8 @@ export default {
     TextAsciiPanel,
     AddVideoButton,
     AddAudioButton,
-    ProfilePictureModal
+    ProfilePictureModal,
+    VideoPlayer
   },
   props: {
     myLxmfAddressHash: String,
@@ -1209,6 +1208,7 @@ export default {
 
         // decode audio to blob url
         const objectUrl = await this.decodeLxmfHighBandVideoFieldToBlobUrl(chatItem.lxmf_message.fields.high_band_video);
+        console.log(objectUrl);
         if (!objectUrl) {
           continue;
         }
@@ -1305,7 +1305,7 @@ export default {
     },
     async decodeLxmfHighBandVideoFieldToBlobUrl(videoField) {
       try {
-        const highBandVideoBytes = videoField.videoBytes;
+        const highBandVideoBytes = videoField.video_bytes;
 
         const buffer = this.base64ToArrayBuffer(highBandVideoBytes);
         const blob = new Blob([buffer], { type: 'video/webm' });
