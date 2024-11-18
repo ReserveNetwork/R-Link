@@ -38,7 +38,10 @@
       <div class="bg-black rounded-lg w-full max-w-4xl h-[80vh] overflow-hidden">
         <!-- Modal Header -->
         <div class="flex justify-between items-center p-4 border-b border-gray-700">
-          <h3 class="text-xl font-semibold text-white">Record ASCII Video</h3>
+          <h3 class="text-xl font-semibold text-white">
+            <span v-if="recordType === 'LOW_BAND'">Record ASCII Video</span>
+            <span v-else-if="recordType === 'HIGH_BAND'">Record WebM Video</span>
+          </h3>
           <button
             @click="closeModal"
             class="text-gray-400 hover:text-white"
@@ -49,11 +52,11 @@
 
         <!-- Modal Content -->
         <div class="h-[calc(100%-8rem)] relative overflow-hidden">
-          <RecordLowBandVideoMessage v-if="recordType == 'LOW_BAND'"
+          <RecordLowBandVideoMessage v-if="recordType === 'LOW_BAND'"
             @recording-complete="handleRecordingComplete"
             @copied="handleCopied"
           />
-          <RecordHighBandVideoMessage v-else-if="recordType == 'HIGH_BAND'"
+          <RecordHighBandVideoMessage v-else-if="recordType === 'HIGH_BAND'"
             @recording-complete="handleHighBandRecordingComplete"
           />
         </div>
