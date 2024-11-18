@@ -200,7 +200,7 @@ export default {
 <template>
     <div class="flex flex-col justify-between h-full py-5">
         <div>
-            <video id="stream-preview" ref="streamPreview" width="256" height="144" controls class="mx-auto"></video>
+            <video id="stream-preview" ref="streamPreview" width="512" height="288" controls class="mx-auto"></video>
             <p id="recording-status" ref="recordingStatus" class="m-0 text-center mt-5 h-5 text-white"></p>
         </div>
         <div id="controls" class="mt-5 flex justify-center h-9">
