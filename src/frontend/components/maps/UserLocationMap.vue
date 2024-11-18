@@ -4,7 +4,7 @@ import L from "leaflet";
 import mbTiles from '../../js/Leaflet.TileLayer.MBTiles';
 import Ping from "ping.js";
 
-const ONLINE_MAX_ZOOM = 36;
+const ONLINE_ZOOM = 12;
 const OFFLINE_MAX_ZOOM = 5;
 const RADIUS = 5000;
 const OPACITY = 0.5;
@@ -208,7 +208,7 @@ export default {
     },
     getZoomOption() {
       if (this.onLine) {
-        return ONLINE_MAX_ZOOM;
+        return ONLINE_ZOOM;
       }
       return OFFLINE_MAX_ZOOM;
     }
