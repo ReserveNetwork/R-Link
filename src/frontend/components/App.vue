@@ -4,9 +4,9 @@
     <!-- header -->
     <div class="flex bg-white p-2 border-gray-300 border-b">
       <div class="flex w-full">
-        <div class="hidden sm:flex my-auto w-full h-auto max-h-10 max-w-28 mr-3">
-          <div class="flex mx-auto my-auto cursor-pointer" @click="onAppNameClick">
-            <img class="w-full h-auto" src="/assets/images/rnet-logo-01.png " alt="RLink" />
+        <div class="hidden sm:flex my-auto w-full h-auto max-h-10 max-w-80 mr-3 overflow-hidden">
+          <div class="flex my-auto cursor-pointer" @click="onAppNameClick">
+            <img class="w-full h-auto max-h-10 max-w-80" src="/assets/images/rnet-logo-01.png " alt="RLink" />
           </div>
         </div>
         <div class="flex my-auto ml-auto mr-0 sm:mr-2 space-x-1 sm:space-x-2">
