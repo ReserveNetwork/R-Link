@@ -209,12 +209,14 @@ export default {
             nodes.push({
                 id: "me",
                 group: "me",
-                size: 60,
+                size: 40,
                 label: this.config?.display_name ?? "This Device",
                 title: [
                     `${this.config?.display_name ?? 'This Device'}`,
                     `Identity: ${this.config?.identity_hash ?? 'Unknown'}`,
                 ].join("\n"),
+                shape: this.config.avatar ? "circularImage" : "image",
+                image: this.config.avatar ? `data:image/webp;base64,${this.config.avatar}` : "/assets/images/reticulum_logo_512.png",
                 font: {
                     color: "#000000",
                     background: "#ffffff",
