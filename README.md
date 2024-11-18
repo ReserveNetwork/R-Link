@@ -2,7 +2,7 @@
 
 [Reserve Network](reserve.network) (RNet) is a self-configuring wireless digital communication network that is designed to operate under adverse conditions such as low bandwidth and high latency, especially for emergency situations where the existing communication infrastructure is inoperable for any reason. 
 
-[R-Link ](https://github.com/ReserveNetwork/R-Link)is a low bandwidth or offline communication application designed specifically for communication on this network.
+[R-Link ](https://github.com/ReserveNetwork/R-Link)is a low bandwidth or offline communication application designed specifically for communication on this network. R-Link is a project that started as a fork from the [Reticulum MeshChat](https://github.com/liamcottle/reticulum-meshchat) application.
 
 <img src="./screenshots/screenshot.png">
 
