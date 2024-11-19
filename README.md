@@ -1,6 +1,6 @@
-## What is Reserve Link (R-Link) ??
+## What is Reserve Link (R-Link) ?
 
-Reserve Link (R-Link) is a network communication application powered by the [Reticulum Network Stack](https://github.com/markqvist/Reticulum) that began development as a fork of [MeshChat](https://github.com/liamcottle/reticulum-meshchat).
+Reserve Link (R-Link) is a mesh network communication application powered by the [Reticulum Network Stack](https://github.com/markqvist/Reticulum) that began development as a fork of [MeshChat](https://github.com/liamcottle/reticulum-meshchat). R-Link is used for communication under adverse conditions such as low bandwidth, very high latency, or even offline scenarios, especially in situations like emergencies and disasters where traditional communication tools become ineffective.
 
 <img src="./screenshots/screenshot.png">
 
