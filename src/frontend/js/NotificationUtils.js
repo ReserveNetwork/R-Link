@@ -22,6 +22,17 @@ class NotificationUtils {
         });
     }
 
+    static showBroadcastNotification(data) {
+        Notification.requestPermission().then((result) => {
+            if (result === "granted") {
+                new window.Notification("New Alert", {
+                    body: data,
+                    tag: "new_broadcast_message"
+                });
+            }
+        });
+    }
+
 }
 
 export default NotificationUtils;

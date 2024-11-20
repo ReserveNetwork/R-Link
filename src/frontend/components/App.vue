@@ -187,6 +187,7 @@ export default {
       displayName: "Anonymous Peer",
       config: null,
       appInfo: null,
+      broadcastData: null,
 
       audioCalls: [],
       propagationNodeStatus: null,
@@ -233,6 +234,11 @@ export default {
         case 'incoming_audio_call': {
           NotificationUtils.showIncomingCallNotification();
           break;
+        }
+        case 'broadcast': {
+          this.broadcastData = json.data;
+          NotificationUtils.showBroadcastNotification(this.broadcastData);
+          console.log(this.broadcastData);
         }
       }
     },

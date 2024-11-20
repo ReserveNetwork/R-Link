@@ -41,6 +41,8 @@ def get_file_path(filename):
 
 class RLink:
 
+    APP_NAME = "rlink"
+
     def __init__(self, identity: RNS.Identity, storage_dir, reticulum_config_dir):
 
         # when providing a custom storage_dir, files will be saved as
@@ -158,6 +160,17 @@ class RLink:
             "location",
         )
 
+        self.broadcast_destination = RNS.Destination(
+            None,
+            RNS.Destination.IN,
+            RNS.Destination.PLAIN,
+            self.APP_NAME,
+            "broadcast",
+            "public_information"
+        )
+
+        self.broadcast_destination.set_packet_callback(self.broadcast_packet_callback)
+
         # start background thread for auto announce loop
         thread = threading.Thread(target=asyncio.run, args=(self.announce_loop(),))
         thread.daemon = True
@@ -237,6 +250,13 @@ class RLink:
 
             # wait 1 second before next loop
             await asyncio.sleep(1)
+
+    # uses brodcast data and send it to the client 
+    def broadcast_packet_callback(self, data, packet):
+        asyncio.run(self.websocket_broadcast(json.dumps({
+            "type": "broadcast",
+            "data": data.decode("utf-8") 
+        })))
 
     # uses the provided destination hash as the active propagation node
     def set_active_propagation_node(self, destination_hash: str | None):

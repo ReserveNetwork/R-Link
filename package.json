@@ -41,7 +41,12 @@
       "artifactName": "RLink-v${version}-${os}.${ext}",
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Microphone access is only needed for Audio Calls",
-        "com.apple.security.device.audio-input": true
+        "NSCameraUsageDescription": "Camera access is only needed for sending Video Messages",
+        "NSLocationUsageDescription": "Location access is only needed for sharing your telemetry data with others",
+        "NSNotification": "Notification permission is only needed to get new message infos, broadcast messages",
+        "com.apple.security.device.audio-input": true,
+        "com.apple.security.device.camera": true,
+        "com.apple.security.personal-information.location": true
       },
       "extraFiles": [
         {
