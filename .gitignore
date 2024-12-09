@@ -12,3 +12,4 @@ storage/
 .venv/
 builder.sh
 __pycache__/
+src/frontend/public/maplibre/*.pmtiles

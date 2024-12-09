@@ -1,8 +1,9 @@
 <script>
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import mbTiles from '../../js/Leaflet.TileLayer.MBTiles';
-import Ping from "ping.js";
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { Protocol } from 'pmtiles';
+import layers from 'protomaps-themes-base';
+import { setLatLng } from '../../js/LocationUtils';
 
 const ONLINE_ZOOM = 12;
 const OFFLINE_MAX_ZOOM = 5;
@@ -25,9 +26,21 @@ export default {
       reloadInterval: null,
       isUpdating: false,
       locations: [],
-      onLine: false,
       p: null,
-      config: null,
+      config: {
+        allow_auto_resending_failed_messages_with_attachments: false,
+        auto_announce_enabled: true,
+        auto_announce_interval_seconds: 1800,
+        auto_resend_failed_messages_when_announce_received: true,
+        auto_send_failed_messages_to_propogation_node: false,
+        avatar: null,
+        display_name: "Anonymous Peer",
+        location: null
+      },
+      bounds: [
+          [25.281944, 34.592838],
+          [44.892540, 43.161398]
+      ]
     };
   },
   methods: {
@@ -53,6 +66,7 @@ export default {
           const latitude = appData.split(",")[0];
           const longitude = appData.split(",")[1];
 
+          /**
           L.marker([latitude, longitude]).addTo(this.map)
               .bindPopup((l) => {
                 const el = document.createElement("div");
@@ -61,7 +75,8 @@ export default {
                  * Get the peer data
                  * @param identityHash
                  * @returns {Promise<void>}
-                 */
+                */
+          /*
                 const getData = async (identityHash) => {
                   const response = await window.axios.get(`/api/v1/announces`, {
                     params: {
@@ -78,6 +93,7 @@ export default {
                 getData(userLocation.identity_hash);
                 return el;
               });
+        */
         }
       } catch (e) {
         console.log(e);
@@ -87,7 +103,6 @@ export default {
       await this.getUserLocations();
     },
     async onAutoReload() {
-      await this.isConnectionUp();
       // do nothing if auto reload disabled
       if (!this.autoReload) {
         return;
@@ -107,67 +122,72 @@ export default {
       }
 
     },
-    async isConnectionUp() {
-      try {
-        this.p.ping("https://www.google.com", (err, duration, payload) => {
-          if (err) {
-            this.onLineStatus(false);
-          } else {
-            this.onLineStatus(true);
-          }
-        }).catch((e) => {
-          console.error(e);
-        });
-      } catch (e) {
-        console.error(e);
-        this.onLineStatus(false);
-      }
-    },
-    onLineStatus(isUp) {
-      console.log("onLineStatus", isUp);
-      this.onLine = isUp;
-    },
     async createMap() {
       try {
-        await this.isConnectionUp();
-        this.map = new L.Map('map').fitWorld();
+        this.map = new maplibregl.Map({
+          container: 'map',
+          style: "maplibre/tr.json",
+          /*
+          style: {
+            "version": 8,
+            "glyphs": 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
+            "sprite": "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
+            "sources": {
+              "protomaps": {
+                "type": "vector",
+                "url": "pmtiles://turkiye6.pmtiles",
+              }
+            },
+            "layers": layers("protomaps", "light"),
+            /*"layers": [
+              {
+                "id": "background",
+                "type": "background",
+                "paint": {
+                  "background-color": "#ccc"
+                }
+              },
+              {
+                "id": "buildings",
+                "type": "fill",
+                "source": "protomaps",
+                "source-layer": "buildings"
+              },
+            ],
+            
+        "id": "protomaps"
+          },
+          */
+          center: [35.087242, 38.877118], // starting position [lng, lat]
+          hash: false, // sync page's url
+          maxPitch: 0,
+          //pitch: 45,
+          zoom: 5.781372202368083, // starting zoom
+          minZoom: 5.781372202368083,
+          maxBounds: this.bounds,
+        });
+        let nav = new maplibregl.NavigationControl();
+        this.map.addControl(nav, 'bottom-right');
+        this.map.fitBounds(this.bounds);
 
-        if (this.onLine) {
-          this.tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            minZoom: 2,
-            maxZoom: 48,
-          });
-          this.setLocations();
-        } else {
-          this.tileLayer = mbTiles("assets/db/countries-raster.mbtiles", {
-            minZoom: 0,
-            maxZoom: 6,
-          });
-        }
-
-        this.tileLayer.addTo(this.map);
-
-        if (!this.onLine) {
-          this.tileLayer.on("databaseloaded", function () {
-            console.log("MBTiles database loaded");
-            this.loading = false;
-          });
-          this.tileLayer.on("databaseerror", function (e) {
-            console.error("MBTiles error", e.error);
-            this.loading = false;
-
-          });
-
-          this.setLocations();
-        }
+        this.map.on('zoomend', (e) => {
+          console.log(this.map.getZoom());
+        });
       } catch (e) {
         console.error(e);
       }
     },
     async getConfig() {
       try {
+        console.log("get config");
         const response = await window.axios.get("/api/v1/config");
-        this.config = response.data.config;
+        if (response.status === 200) {
+          this.config = response.data.config;
+
+          setTimeout(() => {
+            this.setLocations()
+          }, 3000);
+        }
       } catch (e) {
         // do nothing if failed to load config
         console.log(e);
@@ -175,6 +195,16 @@ export default {
     },
     setLocations() {
       if (this.map) {
+        // set user location
+        if (this.config !== null && this.config.location !== null) {
+          const {latitude, longitude} = setLatLng(this.config.location);
+          new maplibregl.Marker()
+            .setLngLat([longitude, latitude])
+            .addTo(this.map);
+        } else {
+          console.log("set current location from geolocation");
+        }
+        /*
         navigator.geolocation.getCurrentPosition((position) => {
           this.center = [position.coords.latitude, position.coords.longitude, position.coords.altitude];
           this.zoom = this.getZoomOption();
@@ -204,40 +234,19 @@ export default {
           this.zoom = this.getZoomOption();
           this.map.setView(this.center, this.zoom);
         });
+        */
+        console.log("Set Locations");
       }
     },
-    getZoomOption() {
-      if (this.onLine) {
-        return ONLINE_ZOOM;
-      }
-      return OFFLINE_MAX_ZOOM;
-    }
   },
   watch: {
-    onLine(value) {
-      if (!this.map) {
-        return;
-      }
-      this.tileLayer.remove();
-      if (value) {
-        this.tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          minZoom: 2,
-          maxZoom: 48,
-        });
-      } else {
-        this.tileLayer = mbTiles("assets/db/countries-raster.mbtiles", {
-          minZoom: 0,
-          maxZoom: 6,
-        });
-      }
-      this.tileLayer.addTo(this.map);
-    }
+  },
+  beforeMount() {
+    this.getConfig();
   },
   mounted() {
-    this.getConfig();
-    this.p = new Ping({
-      favicon: "",
-    });
+    let protocol = new Protocol();
+    maplibregl.addProtocol('pmtiles', protocol.tile);
 
     void this.createMap().then(() => {
       this.getUserLocations();
@@ -256,7 +265,7 @@ export default {
 
 <template>
   <div class="w-full h-full relative">
-    <div id="map" class="w-full h-screen" style="min-width: 600px; min-height: 600px;"></div>
+    <div id="map" class="w-full h-full" style="min-width: 600px; min-height: 600px;"></div>
     <div v-if="loading"
          class="absolute top-0 left-0 w-full h-full bg-white bg-opacity-75 flex items-center justify-center">
       <div class="text-2xl font-bold text-gray-800"></div>

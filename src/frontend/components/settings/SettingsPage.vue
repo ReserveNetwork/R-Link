@@ -505,8 +505,8 @@ export default {
         const locArr = this.config.location.split(",");
         if (locArr.length < 2) return;
 
-        this.latitude = locArr[0];
-        this.longitude = locArr[1];
+        this.latitude = Number(locArr[0].trim());
+        this.longitude = Number(locArr[1].trim());
       }
     },
     /**
