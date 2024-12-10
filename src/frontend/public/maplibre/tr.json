@@ -5,6 +5,10 @@
       "type": "vector",
       "url": "pmtiles://maplibre/turkiye6.pmtiles",
       "attribution": "<a href=\"https://github.com/protomaps/basemaps\">Protomaps</a> © <a href=\"https://openstreetmap.org\">OpenStreetMap</a>"
+    },
+    "satellite_1": {
+      "type": "raster",
+      "url": "pmtiles://maplibre/metropol.pmtiles"
     }
   },
   "layers": [
@@ -485,6 +489,11 @@
       "paint": {
         "fill-color": "#e0e0e0"
       }
+    },
+    {
+      "id": "satellite_1",
+      "type": "raster",
+      "source": "satellite_1"
     },
     {
       "id": "roads_tunnels_other_casing",
@@ -979,8 +988,7 @@
       "type": "fill-extrusion",
       "source": "protomaps",
       "source-layer": "buildings",
-      "minzoom": 15,
-      "filter": ["!=", ["get", "hide_3d"], true],
+      "filter": ["all", ["!has", "hide_3d"]],
       "paint": {
                 "fill-extrusion-base": {
                     "property": "min_height",

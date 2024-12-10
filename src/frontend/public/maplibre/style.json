@@ -32,7 +32,13 @@
     "sources": {
         "protomaps": {
             "type": "vector",
-            "url": "pmtiles://turkiye6.pmtiles"
+            "url": "pmtiles://turkiye6.pmtiles",
+            "maxzoom": 15
+        },
+        "satellite_1": {
+            "type": "raster",
+            "url": "pmtiles://metropol.pmtiles",
+            "minzoom": 15
         },
     },
     "sprite": "sprite",
@@ -413,6 +419,11 @@
             "paint": {
                 "fill-color": "#e0e0e0"
             }
+        },
+        {
+            "id": "satellite_1",
+            "type": "raster",
+            "source": "satellite_1"
         },
         {
             "id": "building-3d",

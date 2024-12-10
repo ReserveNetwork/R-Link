@@ -136,6 +136,9 @@ class RLink:
         # handle received announces based on aspect
         RNS.Transport.register_announce_handler(AnnounceHandler("call.audio", self.on_audio_call_announce_received))
         RNS.Transport.register_announce_handler(AnnounceHandler("lxmf.delivery", self.on_lxmf_announce_received))
+        # Add an handler for rlink delivery
+        RNS.Transport.register_announce_handler(
+            AnnounceHandler("rlink.delivery", self.on_rlink_delivery_announce_received))
         RNS.Transport.register_announce_handler(
             AnnounceHandler("lxmf.propagation", self.on_lxmf_propagation_announce_received))
         RNS.Transport.register_announce_handler(
@@ -143,6 +146,9 @@ class RLink:
         # handle received announces based on location
         RNS.Transport.register_announce_handler(
             AnnounceHandler("telemetry.location", self.on_location_announce_received))
+        # handle rlinkmap announces handler 
+        RNS.Transport.register_announce_handler(
+            AnnounceHandler("rlink.map", self.on_rlink_map_announce_received))
 
         # remember websocket clients
         self.websocket_clients: List[web.WebSocketResponse] = []
@@ -2402,7 +2408,7 @@ class RLink:
                 audio_field.audio_mode,
                 audio_field.audio_bytes,
             ]
-        
+
         if high_band_video_field is not None:
             lxmf_message.fields[LXMF.FIELD_CUSTOM_META] = [
                 high_band_video_field.video_bytes,
@@ -2426,7 +2432,7 @@ class RLink:
 
         # tell all websocket clients that old failed message was deleted so it can remove from ui
         await self.websocket_broadcast(json.dumps({
-    "type": "lxmf_message_created",
+            "type": "lxmf_message_created",
             "lxmf_message": self.convert_lxmf_message_to_dict(lxmf_message),
         }))
 
@@ -2516,6 +2522,26 @@ class RLink:
         # resend all failed messages that were intended for this destination
         if self.config.auto_resend_failed_messages_when_announce_received.get():
             asyncio.run(self.resend_failed_messages_for_destination(destination_hash.hex()))
+
+    # handle an announce received from rlink, for rlink address
+    def on_rlink_delivery_announce_received(self, aspect, destination_hash, announced_identity, app_data):
+
+        # log received announce
+        RNS.log("Received an announce from " + RNS.prettyhexrep(destination_hash) + " for [rlink.delivery]")
+
+        # upsert announce to database
+        self.db_upsert_announce(announced_identity, destination_hash, aspect, app_data)
+
+        # find announce from database
+        announce = database.Announce.get_or_none(database.Announce.destination_hash == destination_hash.hex())
+        if announce is None:
+            return
+
+        # send database announce to all websocket clients
+        asyncio.run(self.websocket_broadcast(json.dumps({
+            "type": "announce",
+            "announce": self.convert_db_announce_to_dict(announce),
+        })))
 
     # handle an announce received from reticulum, for an lxmf propagation node address
     # NOTE: cant be async, as Reticulum doesn't await it
@@ -2654,6 +2680,26 @@ class RLink:
             "type": "announce",
             "announce": self.convert_db_announce_to_dict(announce),
         })))
+
+    # handle an rlink map announce received
+    def on_rlink_map_announce_received(self, aspect, destination_hash, announced_identity, app_data):
+        RNS.log("Received an announce from: " + RNS.prettyhexrep(destination_hash))
+
+        # upsert announce to database
+        self.db_upsert_announce(announced_identity, destination_hash, aspect, app_data)
+
+        # find announce from database
+        announce = database.Announce.get_or_none(database.Announce.destination_hash == destination_hash.hex())
+        if announce is None:
+            return
+
+        # send database announce to all websocket clients
+        asyncio.run(self.websocket_broadcast(json.dumps({
+            "type": "announce",
+            "announce": self.convert_db_announce_to_dict(announce),
+        })))
+
+
 
     # gets the custom display name a user has set for the provided destination hash
     def get_custom_destination_display_name(self, destination_hash: str):

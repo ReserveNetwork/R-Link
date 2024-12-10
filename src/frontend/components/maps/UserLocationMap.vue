@@ -40,6 +40,11 @@ export default {
       bounds: [
           [25.281944, 34.592838],
           [44.892540, 43.161398]
+      ],
+      options: [
+        "Su Kaynağı",
+        "Yardım Paketi",
+        "Çadır Alanı"
       ]
     };
   },
@@ -173,10 +178,31 @@ export default {
         this.map.on('zoomend', (e) => {
           console.log(this.map.getZoom());
         });
+        this.map.on('click', (e) => {
+          const marker = new maplibregl.Marker({draggable: true})
+            .setLngLat(e.lngLat)
+            .addTo(this.map);
+
+          var popup = new maplibregl
+            .Popup({
+              anchor: "top"
+            })
+            .setDOMContent(this.createSelectOptions());
+
+          marker.on('dragend', (e) => { popup.setLngLat(marker.getLngLat()).addTo(this.map); });
+        });
       } catch (e) {
         console.error(e);
       }
     },
+    createSelectOptions() {
+      const selectElement = document.createElement("select");
+      selectElement.add(new Option("Seçiniz", null, true))
+      this.options.forEach((opt) => {
+        selectElement.add(new Option(opt, opt));
+      });
+      return selectElement;
+   },
     async getConfig() {
       try {
         console.log("get config");
